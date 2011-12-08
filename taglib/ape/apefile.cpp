@@ -214,6 +214,9 @@ void APE::File::strip(int tags)
 
 void APE::File::read(bool readProperties, Properties::ReadStyle /* propertiesStyle */)
 {
+  if (!isValid())
+    return;
+
   // Look for an ID3v1 tag
 
   d->ID3v1Location = findID3v1();
