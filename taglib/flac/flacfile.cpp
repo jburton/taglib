@@ -519,3 +519,19 @@ void FLAC::File::removePictures()
   d->blocks = newBlocks;
 }
 
+ByteVector FLAC::File::cueSheet()
+{
+  MetadataBlock *block = NULL;
+  for(uint i = 0; i < d->blocks.size(); i++) {
+    if (d->blocks[i]->code() == MetadataBlock::CueSheet) {
+      block = d->blocks[i];
+      break;
+    }
+  }
+  
+  if (block)
+    return block->render();
+  else
+    return ByteVector::null;
+}
+
