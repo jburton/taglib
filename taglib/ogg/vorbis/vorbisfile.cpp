@@ -109,6 +109,9 @@ bool Vorbis::File::save()
 
 void Vorbis::File::read(bool readProperties, Properties::ReadStyle propertiesStyle)
 {
+  if (!isValid())
+    return;
+  
   ByteVector commentHeaderData = packet(1);
 
   if(commentHeaderData.mid(0, 7) != vorbisCommentHeaderID) {
