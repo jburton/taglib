@@ -48,7 +48,7 @@ class APE::Tag::TagPrivate
 public:
   TagPrivate() : file(0), footerLocation(-1), tagLength(0) {}
 
-  File *file;
+  TagLib::File *file;
   long footerLocation;
   long tagLength;
 
@@ -66,7 +66,7 @@ APE::Tag::Tag() : TagLib::Tag()
   d = new TagPrivate;
 }
 
-APE::Tag::Tag(File *file, long footerLocation) : TagLib::Tag()
+APE::Tag::Tag(TagLib::File *file, long footerLocation) : TagLib::Tag()
 {
   d = new TagPrivate;
   d->file = file;
@@ -276,17 +276,31 @@ void APE::Tag::addValue(const String &key, const String &value, bool replace)
 {
   if(replace)
     removeItem(key);
-  if(!value.isEmpty()) {
-    if(d->itemListMap.contains(key) || !replace)
-      d->itemListMap[key.upper()].appendValue(value);
+  if(!key.isEmpty() && !value.isEmpty()) {
+    if(!replace && d->itemListMap.contains(key)) {
+      // Text items may contain more than one value
+      if(APE::Item::Text == d->itemListMap.begin()->second.type())
+        d->itemListMap[key.upper()].appendValue(value);
+      // Binary or locator items may have only one value
+      else
+        setItem(key, Item(key, value));
+    }
     else
       setItem(key, Item(key, value));
   }
 }
 
+void APE::Tag::setData(const String &key, const ByteVector &value)
+{
+  removeItem(key);
+  if(!key.isEmpty() && !value.isEmpty())
+    setItem(key, Item(key, value, true));
+}
+
 void APE::Tag::setItem(const String &key, const Item &item)
 {
-  d->itemListMap.insert(key.upper(), item);
+  if(!key.isEmpty())
+    d->itemListMap.insert(key.upper(), item);
 }
 
 bool APE::Tag::isEmpty() const
