@@ -63,6 +63,7 @@ public:
     streamLength(0),
     scanned(false),
     hasXiphComment(false),
+	hasCueSheet(false),
     hasID3v2(false),
     hasID3v1(false)
   {
@@ -87,6 +88,7 @@ public:
   Properties *properties;
   ByteVector streamInfoData;
   ByteVector xiphCommentData;
+  ByteVector cueData;
   List<MetadataBlock *> blocks;
 
   long flacStart;
@@ -95,6 +97,7 @@ public:
   bool scanned;
 
   bool hasXiphComment;
+  bool hasCueSheet;
   bool hasID3v2;
   bool hasID3v1;
 };
@@ -453,6 +456,10 @@ void FLAC::File::scan()
         delete picture;
       }
     }
+    else if (blockType == MetadataBlock::CueSheet) {
+		d->cueData = data;
+		d->hasCueSheet = true;
+    }
 
     if(!block) {
       block = new UnknownMetadataBlock(blockType, data);
@@ -557,16 +564,8 @@ void FLAC::File::removePictures()
 
 ByteVector FLAC::File::cueSheet()
 {
-  MetadataBlock *block = NULL;
-  for(uint i = 0; i < d->blocks.size(); i++) {
-    if (d->blocks[i]->code() == MetadataBlock::CueSheet) {
-      block = d->blocks[i];
-      break;
-    }
-  }
-  
-  if (block)
-    return block->render();
+  if (d->hasCueSheet)
+    return d->cueData;
   else
     return ByteVector::null;
 }
