@@ -99,6 +99,9 @@ namespace TagLib {
        * file's audio properties will also be read using \a propertiesStyle.  If
        * false, \a propertiesStyle is ignored.  The frames will be created using
        * \a frameFactory.
+       *
+       * \note TagLib will *not* take ownership of the stream, the caller is
+       * responsible for deleting it after the File object.
        */
       // BIC: merge with the above constructor
       File(IOStream *stream, ID3v2::FrameFactory *frameFactory,
@@ -210,9 +213,9 @@ namespace TagLib {
       /*!
        * Returns a pointer to the ID3v2 tag of the file.
        *
-       * If \a create is false (the default) this will return a null pointer
-       * if there is no valid ID3v2 tag.  If \a create is true it will create
-       * an ID3v2 tag if one does not exist.
+       * A tag will always be returned, regardless of whether there is a
+       * tag in the file or not. Use ID3v2::Tag::isEmpty() to check if
+       * the tag contains no data.
        *
        * \note The Tag <b>is still</b> owned by the MPEG::File and should not be
        * deleted by the user.  It will be deleted when the file (object) is
@@ -223,9 +226,9 @@ namespace TagLib {
       /*!
        * Returns a pointer to the ID3v1 tag of the file.
        *
-       * If \a create is false (the default) this will return a null pointer
-       * if there is no valid ID3v1 tag.  If \a create is true it will create
-       * an ID3v1 tag if one does not exist.
+       * A tag will always be returned, regardless of whether there is a
+       * tag in the file or not. Use Tag::isEmpty() to check if
+       * the tag contains no data.
        *
        * \note The Tag <b>is still</b> owned by the MPEG::File and should not be
        * deleted by the user.  It will be deleted when the file (object) is
@@ -297,6 +300,21 @@ namespace TagLib {
        * Returns the position in the file of the last MPEG frame.
        */
       long lastFrameOffset();
+
+      /*!
+       * Returns whether or not the file on disk contains ID3v1 tag.
+       */
+      bool hasID3v1Tag() const;
+
+      /*!
+       * Returns whether or not the file on disk contains ID3v2 tag.
+       */
+      bool hasID3v2Tag() const;
+
+      /*!
+       * Returns whether or not the file on disk contains APE tag.
+       */
+      bool hasAPETag() const;
 
     private:
       File(const File &);

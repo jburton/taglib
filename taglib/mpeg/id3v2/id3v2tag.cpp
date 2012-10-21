@@ -70,7 +70,29 @@ public:
 
   FrameListMap frameListMap;
   FrameList frameList;
+
+  static const Latin1StringHandler *stringHandler;
 };
+
+static const Latin1StringHandler defaultStringHandler;
+const ID3v2::Latin1StringHandler *ID3v2::Tag::TagPrivate::stringHandler = &defaultStringHandler;
+
+////////////////////////////////////////////////////////////////////////////////
+// StringHandler implementation
+////////////////////////////////////////////////////////////////////////////////
+
+Latin1StringHandler::Latin1StringHandler()
+{
+}
+
+Latin1StringHandler::~Latin1StringHandler()
+{
+}
+
+String Latin1StringHandler::parse(const ByteVector &data) const
+{
+  return String(data, String::Latin1);
+}
 
 ////////////////////////////////////////////////////////////////////////////////
 // public members
@@ -355,7 +377,7 @@ void ID3v2::Tag::removeUnsupportedProperties(const StringList &properties)
       // delete all unknown frames of given type
       FrameList l = frameList(id);
       for(FrameList::ConstIterator fit = l.begin(); fit != l.end(); fit++)
-        if (dynamic_cast<const UnknownFrame *>(*fit) != NULL)
+        if (dynamic_cast<const UnknownFrame *>(*fit) != 0)
           removeFrame(*fit);
     } else if(it->size() == 4){
       ByteVector id = it->data(String::Latin1);
@@ -365,7 +387,7 @@ void ID3v2::Tag::removeUnsupportedProperties(const StringList &properties)
       if(it->size() <= 5)
         continue; // invalid specification
       String description = it->substr(5);
-      Frame *frame;
+      Frame *frame = 0;
       if(id == "TXXX")
         frame = UserTextIdentificationFrame::find(this, description);
       else if(id == "WXXX")
@@ -584,6 +606,19 @@ ByteVector ID3v2::Tag::render(int version) const
   return d->header.render() + tagData;
 }
 
+Latin1StringHandler const *ID3v2::Tag::latin1StringHandler()
+{
+  return TagPrivate::stringHandler;
+}
+
+void ID3v2::Tag::setLatin1StringHandler(const Latin1StringHandler *handler)
+{
+  if(handler)
+    TagPrivate::stringHandler = handler;
+  else
+    TagPrivate::stringHandler = &defaultStringHandler;
+}
+
 ////////////////////////////////////////////////////////////////////////////////
 // protected members
 ////////////////////////////////////////////////////////////////////////////////
@@ -645,8 +680,9 @@ void ID3v2::Tag::parse(const ByteVector &origData)
     // portion of the frame data.
 
     if(data.at(frameDataPosition) == 0) {
-      if(d->header.footerPresent())
+      if(d->header.footerPresent()) {
         debug("Padding *and* a footer found.  This is not allowed by the spec.");
+      }
 
       d->paddingSize = frameDataLength - frameDataPosition;
       return;

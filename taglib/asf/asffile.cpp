@@ -348,7 +348,7 @@ void ASF::File::HeaderExtensionObject::parse(ASF::File *file, uint /*size*/)
     else {
       obj = new UnknownObject(guid);
     }
-    obj->parse(file, size);
+    obj->parse(file, (unsigned int)size);
     objects.append(obj);
     dataPos += size;
   }
@@ -368,14 +368,14 @@ ByteVector ASF::File::HeaderExtensionObject::render(ASF::File *file)
 // public members
 ////////////////////////////////////////////////////////////////////////////////
 
-ASF::File::File(FileName file, bool readProperties, Properties::ReadStyle propertiesStyle) 
+ASF::File::File(FileName file, bool readProperties, Properties::ReadStyle propertiesStyle)
   : TagLib::File(file)
 {
   d = new FilePrivate;
   read(readProperties, propertiesStyle);
 }
 
-ASF::File::File(IOStream *stream, bool readProperties, Properties::ReadStyle propertiesStyle) 
+ASF::File::File(IOStream *stream, bool readProperties, Properties::ReadStyle propertiesStyle)
   : TagLib::File(stream)
 {
   d = new FilePrivate;
@@ -535,7 +535,7 @@ bool ASF::File::save()
     data.append(d->objects[i]->render(this));
   }
   data = headerGuid + ByteVector::fromLongLong(data.size() + 30, false) + ByteVector::fromUInt(d->objects.size(), false) + ByteVector("\x01\x02", 2) + data;
-  insert(data, 0, d->size);
+  insert(data, 0, (TagLib::ulong)d->size);
 
   return true;
 }

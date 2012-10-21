@@ -213,8 +213,10 @@ void TextIdentificationFrame::parseFields(const ByteVector &data)
 
   for(ByteVectorList::Iterator it = l.begin(); it != l.end(); it++) {
     if(!(*it).isEmpty()) {
-      String s(*it, d->textEncoding);
-      d->fieldList.append(s);
+      if(d->textEncoding == String::Latin1)
+        d->fieldList.append(Tag::latin1StringHandler()->parse(*it));
+      else
+        d->fieldList.append(String(*it, d->textEncoding));    
     }
   }
 }
@@ -289,7 +291,7 @@ PropertyMap TextIdentificationFrame::makeTMCLProperties() const
   }
   StringList l = fieldList();
   for(StringList::ConstIterator it = l.begin(); it != l.end(); ++it) {
-    String instrument = PropertyMap::prepareKey(*it);
+    String instrument = it->upper();
     if(instrument.isNull()) {
       // instrument is not a valid key -> frame unsupported
       map.clear();
@@ -382,7 +384,7 @@ PropertyMap UserTextIdentificationFrame::asProperties() const
   String tagName = description();
 
   PropertyMap map;
-  String key = map.prepareKey(tagName);
+  String key = tagName.upper();
   if(key.isNull()) // this frame's description is not a valid PropertyMap key -> add to unsupported list
     map.unsupportedData().append(L"TXXX/" + description());
   else {

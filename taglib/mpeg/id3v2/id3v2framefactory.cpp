@@ -44,6 +44,7 @@
 #include "frames/unsynchronizedlyricsframe.h"
 #include "frames/popularimeterframe.h"
 #include "frames/privateframe.h"
+#include "frames/ownershipframe.h"
 
 using namespace TagLib;
 using namespace ID3v2;
@@ -107,7 +108,7 @@ Frame *FrameFactory::createFrame(const ByteVector &origData, Header *tagHeader) 
   }
 
   for(ByteVector::ConstIterator it = frameID.begin(); it != frameID.end(); it++) {
-    if( (*it < 'A' || *it > 'Z') && (*it < '1' || *it > '9') ) {
+    if( (*it < 'A' || *it > 'Z') && (*it < '0' || *it > '9') ) {
       delete header;
       return 0;
     }
@@ -238,6 +239,14 @@ Frame *FrameFactory::createFrame(const ByteVector &origData, Header *tagHeader) 
 
   if(frameID == "PRIV")
     return new PrivateFrame(data, header);
+  
+  // Ownership (frames 4.22)
+  
+  if(frameID == "OWNE") {
+    OwnershipFrame *f = new OwnershipFrame(data, header);
+    d->setTextEncoding(f);
+    return f;
+  }
 
   return new UnknownFrame(data, header);
 }

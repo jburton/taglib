@@ -117,7 +117,7 @@ int WavPack::Properties::bitsPerSample() const
   return d->bitsPerSample;
 }
 
-uint WavPack::Properties::sampleFrames() const
+TagLib::uint WavPack::Properties::sampleFrames() const
 {
   return d->sampleFrames;
 }
@@ -161,7 +161,7 @@ void WavPack::Properties::read()
   unsigned int samples = d->data.mid(12, 4).toUInt(false);
   if(samples == ~0u) {
     if(d->file && d->style != Fast) {
-      samples = seekFinalIndex(); 
+      samples = seekFinalIndex();
     }
     else {
       samples = 0;

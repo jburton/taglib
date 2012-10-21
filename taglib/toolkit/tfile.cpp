@@ -60,6 +60,7 @@
 #include "mp4file.h"
 #include "wavpackfile.h"
 #include "speexfile.h"
+#include "opusfile.h"
 #include "trueaudiofile.h"
 #include "aifffile.h"
 #include "wavfile.h"
@@ -74,15 +75,17 @@ using namespace TagLib;
 class File::FilePrivate
 {
 public:
-  FilePrivate(IOStream *stream);
+  FilePrivate(IOStream *stream, bool owner);
 
   IOStream *stream;
+  bool streamOwner;
   bool valid;
   static const uint bufferSize = 1024;
 };
 
-File::FilePrivate::FilePrivate(IOStream *stream) :
+File::FilePrivate::FilePrivate(IOStream *stream, bool owner) :
   stream(stream),
+  streamOwner(owner),
   valid(true)
 {
 }
@@ -94,17 +97,17 @@ File::FilePrivate::FilePrivate(IOStream *stream) :
 File::File(FileName fileName)
 {
   IOStream *stream = new FileStream(fileName);
-  d = new FilePrivate(stream);
+  d = new FilePrivate(stream, true);
 }
 
 File::File(IOStream *stream)
 {
-  d = new FilePrivate(stream);
+  d = new FilePrivate(stream, false);
 }
 
 File::~File()
 {
-  if(d->stream)
+  if(d->stream && d->streamOwner)
     delete d->stream;
   delete d;
 }
@@ -133,6 +136,8 @@ PropertyMap File::properties() const
     return dynamic_cast<const Ogg::FLAC::File* >(this)->properties();
   if(dynamic_cast<const Ogg::Speex::File* >(this))
     return dynamic_cast<const Ogg::Speex::File* >(this)->properties();
+  if(dynamic_cast<const Ogg::Opus::File* >(this))
+    return dynamic_cast<const Ogg::Opus::File* >(this)->properties();
   if(dynamic_cast<const Ogg::Vorbis::File* >(this))
     return dynamic_cast<const Ogg::Vorbis::File* >(this)->properties();
   if(dynamic_cast<const RIFF::AIFF::File* >(this))
@@ -172,6 +177,8 @@ void File::removeUnsupportedProperties(const StringList &properties)
     dynamic_cast<Ogg::FLAC::File* >(this)->removeUnsupportedProperties(properties);
   else if(dynamic_cast<Ogg::Speex::File* >(this))
     dynamic_cast<Ogg::Speex::File* >(this)->removeUnsupportedProperties(properties);
+  else if(dynamic_cast<Ogg::Opus::File* >(this))
+    dynamic_cast<Ogg::Opus::File* >(this)->removeUnsupportedProperties(properties);
   else if(dynamic_cast<Ogg::Vorbis::File* >(this))
     dynamic_cast<Ogg::Vorbis::File* >(this)->removeUnsupportedProperties(properties);
   else if(dynamic_cast<RIFF::AIFF::File* >(this))
@@ -208,6 +215,8 @@ PropertyMap File::setProperties(const PropertyMap &properties)
     return dynamic_cast<Ogg::FLAC::File* >(this)->setProperties(properties);
   else if(dynamic_cast<Ogg::Speex::File* >(this))
     return dynamic_cast<Ogg::Speex::File* >(this)->setProperties(properties);
+  else if(dynamic_cast<Ogg::Opus::File* >(this))
+    return dynamic_cast<Ogg::Opus::File* >(this)->setProperties(properties);
   else if(dynamic_cast<Ogg::Vorbis::File* >(this))
     return dynamic_cast<Ogg::Vorbis::File* >(this)->setProperties(properties);
   else if(dynamic_cast<RIFF::AIFF::File* >(this))
@@ -452,12 +461,32 @@ long File::length()
 
 bool File::isReadable(const char *file)
 {
+
+#if defined(_MSC_VER) && (_MSC_VER >= 1400)  // VC++2005 or later
+
+  return _access_s(file, R_OK) == 0;
+
+#else
+
   return access(file, R_OK) == 0;
+
+#endif
+
 }
 
 bool File::isWritable(const char *file)
 {
+
+#if defined(_MSC_VER) && (_MSC_VER >= 1400)  // VC++2005 or later
+
+  return _access_s(file, W_OK) == 0;
+
+#else
+
   return access(file, W_OK) == 0;
+
+#endif
+
 }
 
 ////////////////////////////////////////////////////////////////////////////////

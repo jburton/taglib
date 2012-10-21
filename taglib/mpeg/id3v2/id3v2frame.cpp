@@ -36,6 +36,7 @@
 #include <tdebug.h>
 #include <tstringlist.h>
 
+#include "id3v2tag.h"
 #include "id3v2frame.h"
 #include "id3v2synchdata.h"
 #include "tpropertymap.h"
@@ -71,7 +72,7 @@ namespace
       return false;
 
     for(ByteVector::ConstIterator it = frameID.begin(); it != frameID.end(); it++) {
-      if( (*it < 'A' || *it > 'Z') && (*it < '1' || *it > '9') ) {
+      if( (*it < 'A' || *it > 'Z') && (*it < '0' || *it > '9') ) {
         return false;
       }
     }
@@ -119,7 +120,7 @@ Frame *Frame::createTextualFrame(const String &key, const StringList &values) //
       TextIdentificationFrame *frame = new TextIdentificationFrame(frameID, String::UTF8);
       frame->setText(values);
       return frame;
-    } else if(values.size() == 1){  // URL frame (not WXXX); support only one value
+    } else if((frameID[0] == 'W') && (values.size() == 1)){  // URL frame (not WXXX); support only one value
         UrlLinkFrame* frame = new UrlLinkFrame(frameID);
         frame->setUrl(values.front());
         return frame;
@@ -143,7 +144,9 @@ Frame *Frame::createTextualFrame(const String &key, const StringList &values) //
   // -COMMENT: depending on the number of values, use COMM or TXXX (with description=COMMENT)
   if((key == "COMMENT" || key.startsWith(commentPrefix)) && values.size() == 1){
     CommentsFrame *frame = new CommentsFrame(String::UTF8);
-    frame->setDescription(key == "COMMENT" ? key : key.substr(commentPrefix.size()));
+    if (key != "COMMENT"){
+      frame->setDescription(key.substr(commentPrefix.size()));
+    }
     frame->setText(values.front());
     return frame;
   }
@@ -273,7 +276,11 @@ String Frame::readStringField(const ByteVector &data, String::Type encoding, int
   if(end < *position)
     return String::null;
 
-  String str = String(data.mid(*position, end - *position), encoding);
+  String str;
+  if(encoding == String::Latin1)
+    str = Tag::latin1StringHandler()->parse(data.mid(*position, end - *position));
+  else
+    str = String(data.mid(*position, end - *position), encoding);
 
   *position = end + delimiter.size();
 
