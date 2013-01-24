@@ -112,7 +112,8 @@ FLAC::File::File(FileName file, bool readProperties,
   TagLib::File(file)
 {
   d = new FilePrivate;
-  read(readProperties, propertiesStyle);
+  if(isOpen())
+    read(readProperties, propertiesStyle);
 }
 
 FLAC::File::File(FileName file, ID3v2::FrameFactory *frameFactory,
@@ -121,7 +122,8 @@ FLAC::File::File(FileName file, ID3v2::FrameFactory *frameFactory,
 {
   d = new FilePrivate;
   d->ID3v2FrameFactory = frameFactory;
-  read(readProperties, propertiesStyle);
+  if(isOpen())
+    read(readProperties, propertiesStyle);
 }
 
 FLAC::File::File(IOStream *stream, ID3v2::FrameFactory *frameFactory,
@@ -130,7 +132,8 @@ FLAC::File::File(IOStream *stream, ID3v2::FrameFactory *frameFactory,
 {
   d = new FilePrivate;
   d->ID3v2FrameFactory = frameFactory;
-  read(readProperties, propertiesStyle);
+  if(isOpen())
+    read(readProperties, propertiesStyle);
 }
 
 FLAC::File::~File()
@@ -168,14 +171,7 @@ void FLAC::File::removeUnsupportedProperties(const StringList &unsupported)
 
 PropertyMap FLAC::File::setProperties(const PropertyMap &properties)
 {
-  if(d->hasXiphComment)
-    return d->tag.access<Ogg::XiphComment>(FlacXiphIndex, false)->setProperties(properties);
-  else if(d->hasID3v2)
-    return d->tag.access<ID3v2::Tag>(FlacID3v2Index, false)->setProperties(properties);
-  else if(d->hasID3v1)
-    return d->tag.access<ID3v1::Tag>(FlacID3v1Index, false)->setProperties(properties);
-  else
-    return d->tag.access<Ogg::XiphComment>(FlacXiphIndex, true)->setProperties(properties);
+  return d->tag.access<Ogg::XiphComment>(FlacXiphIndex, true)->setProperties(properties);
 }
 
 FLAC::Properties *FLAC::File::audioProperties() const
