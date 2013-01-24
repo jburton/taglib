@@ -99,6 +99,7 @@ RIFF::Info::Tag::Tag() : TagLib::Tag()
 
 RIFF::Info::Tag::~Tag()
 {
+  delete d;
 }
 
 String RIFF::Info::Tag::title() const
