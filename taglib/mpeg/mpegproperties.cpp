@@ -232,10 +232,36 @@ void MPEG::Properties::read()
 
     // TODO: Make this more robust with audio property detection for VBR without a
     // Xing header.
+	  
+    // No xing header so we have to be sure the header is valid
+    // Search until 2 headers are equal
+    long headerIndex = d->file->nextFrameOffset(first + 2);
+	  
+    while(headerIndex < last)
+    {
+      d->file->seek(headerIndex);
+      Header nextHeader(d->file->readBlock(4));
+      if (nextHeader.isValid()
+          && firstHeader.version() == nextHeader.version()
+          && firstHeader.channelMode() == nextHeader.channelMode()
+          && firstHeader.layer() == nextHeader.layer()
+          && firstHeader.sampleRate() == nextHeader.sampleRate()
+          && firstHeader.isCopyrighted() == nextHeader.isCopyrighted()
+          && firstHeader.isOriginal() == nextHeader.isOriginal()
+          && firstHeader.isPadded() == nextHeader.isPadded())
+      {
+        //header is good!
+        break;
+      }
+      else
+      {
+        firstHeader = nextHeader;
+        headerIndex = d->file->nextFrameOffset(headerIndex + 2);
+      }
+    }
 
     if(firstHeader.frameLength() > 0 && firstHeader.bitrate() > 0) {
       int frames = (last - first) / firstHeader.frameLength() + 1;
-
       d->length = int(float(firstHeader.frameLength() * frames) /
                       float(firstHeader.bitrate() * 125) + 0.5);
       d->bitrate = firstHeader.bitrate();
