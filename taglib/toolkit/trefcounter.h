@@ -1,7 +1,7 @@
-/**************************************************************************
-    copyright            : (C) 2010 by Lukáš Lalinský
-    email                : lalinsky@gmail.com
- **************************************************************************/
+/***************************************************************************
+    copyright            : (C) 2013 by Tsuda Kageyu
+    email                : tsuda.kageyu@gmail.com
+ ***************************************************************************/
 
 /***************************************************************************
  *   This library is free software; you can redistribute it and/or modify  *
@@ -23,25 +23,35 @@
  *   http://www.mozilla.org/MPL/                                           *
  ***************************************************************************/
 
-#include <taglib.h>
-#include <tdebug.h>
-#include "flacmetadatablock.h"
+#ifndef TAGLIB_REFCOUNTER_H
+#define TAGLIB_REFCOUNTER_H
 
-using namespace TagLib;
+#include "taglib.h"
 
-class FLAC::MetadataBlock::MetadataBlockPrivate
+#ifndef DO_NOT_DOCUMENT // Tell Doxygen to skip this class.
+/*!
+  * \internal
+  * This is just used as a base class for shared classes in TagLib.
+  *
+  * \warning This <b>is not</b> part of the TagLib public API!
+  */
+namespace TagLib
 {
-public:
-  MetadataBlockPrivate() {}
+  class RefCounter
+  {
+  public:
+    RefCounter();
+    virtual ~RefCounter();
 
-};
+    void ref();
+    bool deref();
+    int count() const;
 
-FLAC::MetadataBlock::MetadataBlock()
-{
-  d = 0;
+  private:
+    class RefCounterPrivate;
+    RefCounterPrivate *d;
+  };
 }
 
-FLAC::MetadataBlock::~MetadataBlock()
-{
-}
-
+#endif // DO_NOT_DOCUMENT
+#endif

@@ -1,5 +1,5 @@
 /***************************************************************************
-    copyright            : (C) 2002 - 2008 by Scott Wheeler
+    copyright            : (C) 2012 by Tsuda Kageyu
     email                : wheeler@kde.org
  ***************************************************************************/
 
@@ -86,15 +86,17 @@ ByteVector RIFF::Info::StringHandler::render(const String &s) const
 static const StringHandler defaultStringHandler;
 const RIFF::Info::StringHandler *RIFF::Info::Tag::TagPrivate::stringHandler = &defaultStringHandler;
 
-RIFF::Info::Tag::Tag(const ByteVector &data) : TagLib::Tag()
+RIFF::Info::Tag::Tag(const ByteVector &data) 
+  : TagLib::Tag()
+  , d(new TagPrivate())
 {
-  d = new TagPrivate;
   parse(data);
 }
 
-RIFF::Info::Tag::Tag() : TagLib::Tag()
+RIFF::Info::Tag::Tag() 
+  : TagLib::Tag()
+  , d(new TagPrivate())
 {
-  d = new TagPrivate;
 }
 
 RIFF::Info::Tag::~Tag()
@@ -250,7 +252,7 @@ void RIFF::Info::Tag::parse(const ByteVector &data)
 {
   uint p = 4;
   while(p < data.size()) {
-    uint size = data.mid(p + 4, 4).toUInt(false);
+    const uint size = data.toUInt(p + 4, false);
     d->fieldListMap[data.mid(p, 4)] = TagPrivate::stringHandler->parse(data.mid(p + 8, size));
 
     p += ((size + 1) & ~1) + 8;

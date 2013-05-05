@@ -21,7 +21,6 @@ option(BUILD_EXAMPLES "Build the examples"  OFF)
 
 option(NO_ITUNES_HACKS "Disable workarounds for iTunes bugs"  OFF)
 
-add_definitions(-DHAVE_CONFIG_H)
 set(TESTS_DIR "${CMAKE_CURRENT_SOURCE_DIR}/tests/")
 
 ## the following are directories where stuff will be installed to
@@ -82,13 +81,13 @@ if(NOT WIN32 AND NOT BUILD_FRAMEWORK)
 endif()
 
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
-configure_file(config-taglib.h.cmake ${CMAKE_CURRENT_BINARY_DIR}/config.h)
+configure_file(config.h.cmake ${CMAKE_CURRENT_BINARY_DIR}/config.h)
 
 if(WITH_ASF)
-    set(TAGLIB_WITH_ASF TRUE)
+  set(TAGLIB_WITH_ASF TRUE)
 endif()
 if(WITH_MP4)
-    set(TAGLIB_WITH_MP4 TRUE)
+  set(TAGLIB_WITH_MP4 TRUE)
 endif()
 
 configure_file(taglib/taglib_config.h.cmake ${CMAKE_CURRENT_BINARY_DIR}/taglib_config.h)
