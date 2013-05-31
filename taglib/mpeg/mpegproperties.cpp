@@ -257,6 +257,8 @@ void MPEG::Properties::read()
       {
         firstHeader = nextHeader;
         headerIndex = d->file->nextFrameOffset(headerIndex + 2);
+        if (headerIndex < 0)
+          break;
       }
     }
 
