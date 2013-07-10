@@ -21,6 +21,7 @@ option(BUILD_EXAMPLES "Build the examples"  OFF)
 
 option(NO_ITUNES_HACKS "Disable workarounds for iTunes bugs"  OFF)
 
+add_definitions(-DHAVE_CONFIG_H)
 set(TESTS_DIR "${CMAKE_CURRENT_SOURCE_DIR}/tests/")
 
 ## the following are directories where stuff will be installed to
@@ -88,6 +89,11 @@ if(WITH_ASF)
 endif()
 if(WITH_MP4)
   set(TAGLIB_WITH_MP4 TRUE)
+endif()
+
+option(TRACE_IN_RELEASE "Output debug messages even in release mode"  OFF)
+if(TRACE_IN_RELEASE)
+  set(TRACE_IN_RELEASE TRUE)
 endif()
 
 configure_file(taglib/taglib_config.h.cmake ${CMAKE_CURRENT_BINARY_DIR}/taglib_config.h)

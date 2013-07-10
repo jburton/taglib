@@ -30,10 +30,6 @@ if(ZLIB_FOUND)
   include_directories(${ZLIB_INCLUDE_DIR})
 endif()
 
-if(NOT MSVC AND SHLWAPI_FOUND)
-  include_directories(${SHLWAPI_INCLUDE_DIR})
-endif()
-
 set(tag_HDRS
   tag.h
   fileref.h
@@ -55,6 +51,7 @@ set(tag_HDRS
   toolkit/tmap.tcc
   toolkit/tpropertymap.h
   toolkit/trefcounter.h
+  toolkit/tdebuglistener.h
   mpeg/mpegfile.h
   mpeg/mpegproperties.h
   mpeg/mpegheader.h
@@ -295,6 +292,7 @@ set(toolkit_SRCS
   toolkit/tdebug.cpp
   toolkit/tpropertymap.cpp
   toolkit/trefcounter.cpp
+  toolkit/tdebuglistener.cpp
   toolkit/unicode.cpp
 )
 
@@ -313,14 +311,6 @@ add_library(tag ${tag_LIB_SRCS} ${tag_HDRS})
 
 if(ZLIB_FOUND)
 	target_link_libraries(tag ${ZLIB_LIBRARIES})
-endif()
-
-if(MSVC)
-  target_link_libraries(tag shlwapi.lib)
-else()
-  if(SHLWAPI_FOUND)
-    target_link_libraries(tag ${SHLWAPI_LIBRARIES})
-  endif()
 endif()
 
 set_target_properties(tag PROPERTIES

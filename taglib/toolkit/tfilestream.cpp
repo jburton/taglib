@@ -45,7 +45,7 @@ namespace
   typedef FileName FileNameHandle;
   typedef HANDLE FileHandle;
 
-  const uint BufferSize = 8192;
+  const TagLib::uint BufferSize = 8192;
   const FileHandle InvalidFileHandle = INVALID_HANDLE_VALUE;
 
   inline FileHandle openFile(const FileName &path, bool readOnly)
@@ -83,35 +83,6 @@ namespace
       return 0;
   }
 
-# ifndef NDEBUG
-
-  // Convert a string in a local encoding into a UTF-16 string.
-
-  // Debugging use only. In actual use, file names in local encodings are passed to 
-  // CreateFileA() without any conversions.
-
-  String fileNameToString(const FileName &name)
-  {
-    if(!name.wstr().empty()) {
-      return String(name.wstr());
-    } 
-    else if(!name.str().empty()) {
-      const int len = MultiByteToWideChar(CP_ACP, 0, name.str().c_str(), -1, NULL, 0);
-      if(len == 0)
-        return String::null;
-
-      wstring wstr(len, L'\0');
-      MultiByteToWideChar(CP_ACP, 0, name.str().c_str(), -1, &wstr[0], len);
-
-      return String(wstr);
-    }
-    else {
-      return String::null;
-    }
-  }
-
-# endif
-
 #else   // _WIN32
 
   struct FileNameHandle : public std::string
@@ -122,7 +93,7 @@ namespace
 
   typedef FILE* FileHandle;
 
-  const uint BufferSize = 8192;
+  const TagLib::uint BufferSize = 8192;
   const FileHandle InvalidFileHandle = 0;
 
   inline FileHandle openFile(const FileName &path, bool readOnly)
@@ -183,7 +154,7 @@ FileStream::FileStream(FileName fileName, bool openReadOnly)
   if(d->file == InvalidFileHandle) 
   {
 # ifdef _WIN32
-    debug("Could not open file " + fileNameToString(fileName));
+    debug("Could not open file " + fileName.toString());
 # else
     debug("Could not open file " + String(static_cast<const char *>(d->name)));
 # endif 
