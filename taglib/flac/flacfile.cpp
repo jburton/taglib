@@ -567,3 +567,17 @@ ByteVector FLAC::File::cueSheet()
     return ByteVector::null;
 }
 
+bool FLAC::File::hasXiphComment() const
+{
+  return d->hasXiphComment;
+}
+
+bool FLAC::File::hasID3v1Tag() const
+{
+  return d->hasID3v1;
+}
+
+bool FLAC::File::hasID3v2Tag() const
+{
+  return d->hasID3v2;
+}
