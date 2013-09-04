@@ -235,14 +235,12 @@ void MPEG::Properties::read()
 	  
     // No xing header so we have to be sure the header is valid
     // Search until 2 headers are equal
-    long headerIndex = d->file->nextFrameOffset(first + 2);
-	  
-    while(headerIndex < last)
+    long headerOffset = d->file->nextFrameOffset(first + 2);	
+    while(headerOffset < last)
     {
-      d->file->seek(headerIndex);
+      d->file->seek(headerOffset);
       Header nextHeader(d->file->readBlock(4));
-      if (nextHeader.isValid()
-          && firstHeader.version() == nextHeader.version()
+      if (firstHeader.version() == nextHeader.version()
           && firstHeader.channelMode() == nextHeader.channelMode()
           && firstHeader.layer() == nextHeader.layer()
           && firstHeader.sampleRate() == nextHeader.sampleRate()
@@ -256,8 +254,9 @@ void MPEG::Properties::read()
       else
       {
         firstHeader = nextHeader;
-        headerIndex = d->file->nextFrameOffset(headerIndex + 2);
-        if (headerIndex < 0)
+        int oldOffset = headerOffset;
+        headerOffset = d->file->nextFrameOffset(headerOffset + 2);
+        if (headerOffset < 0 || headerOffset == oldOffset)
           break;
       }
     }
