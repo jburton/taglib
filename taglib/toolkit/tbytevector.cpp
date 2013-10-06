@@ -136,7 +136,7 @@ int findVector(
 {
   const size_t dataSize    = dataEnd    - dataBegin;
   const size_t patternSize = patternEnd - patternBegin;
-  if(patternSize > dataSize || offset > dataSize - 1)
+  if(patternSize > dataSize || offset > dataSize - 1 || offset + patternSize > dataSize - 1)
     return -1;
 
   // n % 0 is invalid
