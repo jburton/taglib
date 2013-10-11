@@ -425,47 +425,50 @@ void FLAC::File::scan()
     length = header.toUInt(1U, 3U);
 
     ByteVector data = readBlock(length);
-    if(data.size() != length || length == 0) {
+    if(data.size() != length) {
       debug("FLAC::File::scan() -- FLAC stream corrupted");
       setValid(false);
       return;
     }
-
-    MetadataBlock *block = 0;
-
-    // Found the vorbis-comment
-    if(blockType == MetadataBlock::VorbisComment) {
-      if(!d->hasXiphComment) {
-        d->xiphCommentData = data;
-        d->hasXiphComment = true;
+	  
+	  if (length != 0)
+    {
+      MetadataBlock *block = 0;
+      
+      // Found the vorbis-comment
+      if(blockType == MetadataBlock::VorbisComment) {
+        if(!d->hasXiphComment) {
+          d->xiphCommentData = data;
+          d->hasXiphComment = true;
+        }
+        else {
+          debug("FLAC::File::scan() -- multiple Vorbis Comment blocks found, using the first one");
+        }
+      }
+      else if(blockType == MetadataBlock::Picture) {
+        FLAC::Picture *picture = new FLAC::Picture();
+        if(picture->parse(data)) {
+          block = picture;
+        }
+        else {
+          debug("FLAC::File::scan() -- invalid picture found, discarting");
+          delete picture;
+        }
+      }
+      else if (blockType == MetadataBlock::CueSheet) {
+        d->cueData = data;
+        d->hasCueSheet = true;
+      }
+      
+      if(!block) {
+        block = new UnknownMetadataBlock(blockType, data);
+      }
+      if(block->code() != MetadataBlock::Padding) {
+        d->blocks.append(block);
       }
       else {
-        debug("FLAC::File::scan() -- multiple Vorbis Comment blocks found, using the first one");
+        delete block;
       }
-    }
-    else if(blockType == MetadataBlock::Picture) {
-      FLAC::Picture *picture = new FLAC::Picture();
-      if(picture->parse(data)) {
-        block = picture;
-      }
-      else {
-        debug("FLAC::File::scan() -- invalid picture found, discarting");
-        delete picture;
-      }
-    }
-    else if (blockType == MetadataBlock::CueSheet) {
-		d->cueData = data;
-		d->hasCueSheet = true;
-    }
-
-    if(!block) {
-      block = new UnknownMetadataBlock(blockType, data);
-    }
-    if(block->code() != MetadataBlock::Padding) {
-      d->blocks.append(block);
-    }
-    else {
-      delete block;
     }
 
     nextBlockOffset += length + 4;
