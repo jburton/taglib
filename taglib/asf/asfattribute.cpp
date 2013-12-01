@@ -151,7 +151,7 @@ ByteVector ASF::Attribute::toByteVector() const
 
 unsigned short ASF::Attribute::toBool() const
 {
-  return d->shortValue;
+  return d->boolValue;
 }
 
 unsigned short ASF::Attribute::toUShort() const
