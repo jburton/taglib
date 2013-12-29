@@ -236,29 +236,32 @@ void MPEG::Properties::read()
     // No xing header so we have to be sure the header is valid
     // Search until 2 headers are equal
     long headerOffset = d->file->nextFrameOffset(first + 2);	
-    while(headerOffset < last)
-    {
-      d->file->seek(headerOffset);
-      Header nextHeader(d->file->readBlock(4));
-      if (firstHeader.version() == nextHeader.version()
-          && firstHeader.channelMode() == nextHeader.channelMode()
-          && firstHeader.layer() == nextHeader.layer()
-          && firstHeader.sampleRate() == nextHeader.sampleRate()
-          && firstHeader.isCopyrighted() == nextHeader.isCopyrighted()
-          && firstHeader.isOriginal() == nextHeader.isOriginal()
-          && firstHeader.isPadded() == nextHeader.isPadded())
-      {
-        //header is good!
-        break;
-      }
-      else
-      {
-        firstHeader = nextHeader;
-        int oldOffset = headerOffset;
+    while(headerOffset < last && headerOffset >= 0) {
+		d->file->seek(headerOffset);
+		Header nextHeader(d->file->readBlock(4));
+		if (nextHeader.isValid()) {
+			if (firstHeader.version() == nextHeader.version()
+				&& firstHeader.channelMode() == nextHeader.channelMode()
+				&& firstHeader.layer() == nextHeader.layer()
+				&& firstHeader.sampleRate() == nextHeader.sampleRate()
+				&& firstHeader.isCopyrighted() == nextHeader.isCopyrighted()
+				&& firstHeader.isOriginal() == nextHeader.isOriginal()
+				&& firstHeader.isPadded() == nextHeader.isPadded()
+				&& lastHeader.version() == nextHeader.version()
+				&& lastHeader.channelMode() == nextHeader.channelMode()
+				&& lastHeader.layer() == nextHeader.layer()
+				&& lastHeader.sampleRate() == nextHeader.sampleRate()
+				&& lastHeader.isCopyrighted() == nextHeader.isCopyrighted()
+				&& lastHeader.isOriginal() == nextHeader.isOriginal()
+				&& lastHeader.isPadded() == nextHeader.isPadded() ) {
+				//header is good!
+				break;
+			}
+			
+			firstHeader = nextHeader;
+		}
+		
         headerOffset = d->file->nextFrameOffset(headerOffset + 2);
-        if (headerOffset < 0 || headerOffset == oldOffset)
-          break;
-      }
     }
 
     if(firstHeader.frameLength() > 0 && firstHeader.bitrate() > 0) {
