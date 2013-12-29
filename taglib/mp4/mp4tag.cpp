@@ -747,7 +747,12 @@ MP4::Tag::setYear(uint value)
 void
 MP4::Tag::setTrack(uint value)
 {
-  d->items["trkn"] = MP4::Item(value, 0);
+  if(d->items.contains("trkn")) {
+    MP4::Item trkn = d->items["trkn"];
+    d->items["trkn"] = MP4::Item(value, trkn.toIntPair().second);
+  }
+  else
+    d->items["trkn"] = MP4::Item(value, 0);
 }
 
 MP4::ItemListMap &
