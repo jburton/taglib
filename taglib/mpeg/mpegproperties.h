@@ -37,6 +37,7 @@ namespace TagLib {
 
     class File;
     class XingHeader;
+    class VbriHeader;
 
     //! An implementation of audio property reading for MP3
 
@@ -72,6 +73,13 @@ namespace TagLib {
        */
 
       const XingHeader *xingHeader() const;
+      
+      /*!
+       * Returns a pointer to the VbriHeader if one exists or null if no
+       * VbriHeader was found.
+       */
+      
+      const VbriHeader *vbriHeader() const;
 
       /*!
        * Returns the MPEG Version of the file.

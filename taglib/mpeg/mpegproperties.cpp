@@ -29,6 +29,7 @@
 #include "mpegproperties.h"
 #include "mpegfile.h"
 #include "xingheader.h"
+#include "vbriHeader.h"
 
 using namespace TagLib;
 
@@ -38,6 +39,7 @@ public:
   PropertiesPrivate(File *f, ReadStyle s) :
     file(f),
     xingHeader(0),
+    vbriHeader(0),
     style(s),
     length(0),
     bitrate(0),
@@ -53,10 +55,12 @@ public:
   ~PropertiesPrivate()
   {
     delete xingHeader;
+    delete vbriHeader;
   }
 
   File *file;
   XingHeader *xingHeader;
+  VbriHeader *vbriHeader;
   ReadStyle style;
   int length;
   int bitrate;
@@ -209,76 +213,104 @@ void MPEG::Properties::read()
   d->file->seek(first + xingHeaderOffset);
   d->xingHeader = new XingHeader(d->file->readBlock(16));
 
-  // Read the length and the bitrate from the Xing header.
-
+  Header validHeader = firstHeader;
+  
+  // Read the length and the bitrate from the Xing or Vbri header.
   if(d->xingHeader->isValid() &&
      firstHeader.sampleRate() > 0 &&
      d->xingHeader->totalFrames() > 0)
-  {
-      double timePerFrame =
-        double(firstHeader.samplesPerFrame()) / firstHeader.sampleRate();
-
-      double length = timePerFrame * d->xingHeader->totalFrames();
-
-      d->length = int(length);
-      d->bitrate = d->length > 0 ? (int)(d->xingHeader->totalSize() * 8 / length / 1000) : 0;
+  {    
+    double timePerFrame =
+    double(firstHeader.samplesPerFrame()) / firstHeader.sampleRate();
+    
+    double length = timePerFrame * d->xingHeader->totalFrames();
+    
+    d->length = int(length);
+    d->bitrate = d->length > 0 ? (int)(d->xingHeader->totalSize() * 8 / length / 1000) : 0;
   }
-  else {
-    // Since there was no valid Xing header found, we hope that we're in a constant
-    // bitrate file.
-
+  else
+  {
     delete d->xingHeader;
     d->xingHeader = 0;
-
-    // TODO: Make this more robust with audio property detection for VBR without a
-    // Xing header.
-	  
-    // No xing header so we have to be sure the header is valid
-    // Search until 2 headers are equal
-    long headerOffset = d->file->nextFrameOffset(first + 2);	
-    while(headerOffset < last && headerOffset >= 0) {
-		d->file->seek(headerOffset);
-		Header nextHeader(d->file->readBlock(4));
-		if (nextHeader.isValid()) {
-			if (firstHeader.version() == nextHeader.version()
-				&& firstHeader.channelMode() == nextHeader.channelMode()
-				&& firstHeader.layer() == nextHeader.layer()
-				&& firstHeader.sampleRate() == nextHeader.sampleRate()
-				&& firstHeader.isCopyrighted() == nextHeader.isCopyrighted()
-				&& firstHeader.isOriginal() == nextHeader.isOriginal()
-				&& firstHeader.isPadded() == nextHeader.isPadded()
-				&& lastHeader.version() == nextHeader.version()
-				&& lastHeader.channelMode() == nextHeader.channelMode()
-				&& lastHeader.layer() == nextHeader.layer()
-				&& lastHeader.sampleRate() == nextHeader.sampleRate()
-				&& lastHeader.isCopyrighted() == nextHeader.isCopyrighted()
-				&& lastHeader.isOriginal() == nextHeader.isOriginal()
-				&& lastHeader.isPadded() == nextHeader.isPadded() ) {
-				//header is good!
-				break;
-			}
-			
-			firstHeader = nextHeader;
-		}
-		
-        headerOffset = d->file->nextFrameOffset(headerOffset + 2);
+    
+    d->file->seek(first + 4 + 32);
+    d->vbriHeader = new VbriHeader(d->file->readBlock(24));
+    
+    if (d->vbriHeader->isValid() &&
+        d->vbriHeader->totalFrames())
+    {
+      double timePerFrame =
+      double(firstHeader.samplesPerFrame()) / firstHeader.sampleRate();
+      
+      double length = timePerFrame * d->vbriHeader->totalFrames();
+      
+      d->length = int(length);
+      d->bitrate = d->length > 0 ? (int)(d->vbriHeader->totalSize() * 8 / length / 1000) : 0;
     }
-
-    if(firstHeader.frameLength() > 0 && firstHeader.bitrate() > 0) {
-      int frames = (last - first) / firstHeader.frameLength() + 1;
-      d->length = int(float(firstHeader.frameLength() * frames) /
-                      float(firstHeader.bitrate() * 125) + 0.5);
-      d->bitrate = firstHeader.bitrate();
+    else
+    {
+      // Since there was no valid Xing or Vbri header found, we hope that we're in a constant
+      // bitrate file.
+      // TODO: Make this more robust with audio property detection for VBR without a
+      // Xing header.
+      
+      delete d->vbriHeader;
+      d->vbriHeader = 0;
+      
+      // To be sure the header is valid, search until two headers match
+      
+      // use the first header if we don't find any matching ones
+      validHeader = firstHeader;
+      
+      if (!(firstHeader.version() == lastHeader.version()
+            && firstHeader.layer() == lastHeader.layer()
+            && firstHeader.sampleRate() == lastHeader.sampleRate()
+            && firstHeader.channelMode() == lastHeader.channelMode()
+            && firstHeader.isCopyrighted() == lastHeader.isCopyrighted()
+            && firstHeader.isOriginal() == lastHeader.isOriginal()))
+      {
+        // First and last headers didn't match, try to find some matching ones
+        long headerOffset = d->file->nextFrameOffset(first + 2);
+        while(headerOffset < last && headerOffset >= 0)
+        {
+          d->file->seek(headerOffset);
+          Header nextHeader(d->file->readBlock(4));
+          if (nextHeader.isValid() && nextHeader.frameLength() > 0 && nextHeader.bitrate() > 0)
+          {
+            if (firstHeader.version() == nextHeader.version()
+                && firstHeader.layer() == nextHeader.layer()
+                && firstHeader.sampleRate() == nextHeader.sampleRate()
+                && firstHeader.channelMode() == nextHeader.channelMode()
+                && firstHeader.isCopyrighted() == nextHeader.isCopyrighted()
+                && firstHeader.isOriginal() == nextHeader.isOriginal())
+            {
+              // headers match!
+              validHeader = firstHeader;
+              break;
+            }
+            
+            firstHeader = nextHeader;
+          }
+          
+          headerOffset = d->file->nextFrameOffset(headerOffset + 2);
+        }
+      }
+      
+      if(validHeader.frameLength() > 0 && validHeader.bitrate() > 0) {
+        int frames = (last - first) / validHeader.frameLength();
+        d->length = int(float(validHeader.frameLength() * frames) /
+                        float(validHeader.bitrate() * 125) + 0.5);
+        d->bitrate = validHeader.bitrate();
+      }
     }
   }
-
-
-  d->sampleRate = firstHeader.sampleRate();
-  d->channels = firstHeader.channelMode() == Header::SingleChannel ? 1 : 2;
-  d->version = firstHeader.version();
-  d->layer = firstHeader.layer();
-  d->protectionEnabled = firstHeader.protectionEnabled();
-  d->channelMode = firstHeader.channelMode();
-  d->isCopyrighted = firstHeader.isCopyrighted();
-  d->isOriginal = firstHeader.isOriginal();
+    
+  d->sampleRate = validHeader.sampleRate();
+  d->channels = validHeader.channelMode() == Header::SingleChannel ? 1 : 2;
+  d->version = validHeader.version();
+  d->layer = validHeader.layer();
+  d->protectionEnabled = validHeader.protectionEnabled();
+  d->channelMode = validHeader.channelMode();
+  d->isCopyrighted = validHeader.isCopyrighted();
+  d->isOriginal = validHeader.isOriginal();
 }
