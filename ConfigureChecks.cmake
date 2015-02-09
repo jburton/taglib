@@ -6,8 +6,9 @@ include(CheckLibraryExists)
 include(CheckTypeSize)
 include(CheckCXXSourceCompiles)
 include(TestBigEndian)
+include(TestFloatFormat)
 
-# Check if the size of integral types are suitable.
+# Check if the size of numeric types are suitable.
 
 check_type_size("short" SIZEOF_SHORT)
 if(NOT ${SIZEOF_SHORT} EQUAL 2)
@@ -29,6 +30,16 @@ if(${SIZEOF_WCHAR_T} LESS 2)
   MESSAGE(FATAL_ERROR "TagLib requires that wchar_t is sufficient to store a UTF-16 char.")
 endif()
 
+check_type_size("float" SIZEOF_FLOAT)
+if(NOT ${SIZEOF_FLOAT} EQUAL 4)
+  MESSAGE(FATAL_ERROR "TagLib requires that float is 32-bit wide.")
+endif()
+
+check_type_size("double" SIZEOF_DOUBLE)
+if(NOT ${SIZEOF_DOUBLE} EQUAL 8)
+  MESSAGE(FATAL_ERROR "TagLib requires that double is 64-bit wide.")
+endif()
+
 # Determine the CPU byte order.
 
 test_big_endian(IS_BIG_ENDIAN)
@@ -39,69 +50,81 @@ else()
   set(SYSTEM_BYTEORDER 2)
 endif()
 
+# Check if the format of floating point types are suitable.
+
+test_float_format(FP_IEEE754)
+if(${FP_IEEE754} EQUAL 1)
+  set(FLOAT_BYTEORDER 1)
+elseif(${FP_IEEE754} EQUAL 2)
+  set(FLOAT_BYTEORDER 2)
+else()
+  MESSAGE(FATAL_ERROR "TagLib requires that floating point types are IEEE754 compliant.")
+endif()
+
+
 # Determine which kind of atomic operations your compiler supports.
 
 check_cxx_source_compiles("
   #include <atomic>
-  int main() { 
+  int main() {
     std::atomic<unsigned int> x;
     x.fetch_add(1);
     x.fetch_sub(1);
-    return 0; 
+    return 0;
   }
 " HAVE_STD_ATOMIC)
 
 if(NOT HAVE_STD_ATOMIC)
   check_cxx_source_compiles("
     #include <boost/atomic.hpp>
-    int main() { 
+    int main() {
       boost::atomic<unsigned int> x(1);
       x.fetch_add(1);
       x.fetch_sub(1);
-      return 0; 
+      return 0;
     }
   " HAVE_BOOST_ATOMIC)
 
   if(NOT HAVE_BOOST_ATOMIC)
     check_cxx_source_compiles("
-      int main() { 
+      int main() {
         volatile int x;
         __sync_add_and_fetch(&x, 1);
         int y = __sync_sub_and_fetch(&x, 1);
-        return 0; 
+        return 0;
       }
     " HAVE_GCC_ATOMIC)
 
     if(NOT HAVE_GCC_ATOMIC)
       check_cxx_source_compiles("
         #include <libkern/OSAtomic.h>
-        int main() { 
+        int main() {
           volatile int32_t x;
           OSAtomicIncrement32Barrier(&x);
           int32_t y = OSAtomicDecrement32Barrier(&x);
-          return 0; 
+          return 0;
         }
       " HAVE_MAC_ATOMIC)
 
       if(NOT HAVE_MAC_ATOMIC)
         check_cxx_source_compiles("
           #include <windows.h>
-          int main() { 
+          int main() {
             volatile LONG x;
             InterlockedIncrement(&x);
             LONG y = InterlockedDecrement(&x);
-            return 0; 
+            return 0;
           }
         " HAVE_WIN_ATOMIC)
 
         if(NOT HAVE_WIN_ATOMIC)
           check_cxx_source_compiles("
             #include <ia64intrin.h>
-            int main() { 
+            int main() {
               volatile int x;
               __sync_add_and_fetch(&x, 1);
               int y = __sync_sub_and_fetch(&x, 1);
-              return 0; 
+              return 0;
             }
           " HAVE_IA64_ATOMIC)
         endif()
@@ -112,26 +135,26 @@ endif()
 
 # Determine which kind of byte swap functions your compiler supports.
 
-# GCC's __builtin_bswap* should be checked individually 
+# GCC's __builtin_bswap* should be checked individually
 # because some of them can be missing depends on the GCC version.
 check_cxx_source_compiles("
   int main() {
     __builtin_bswap16(0);
-    return 0; 
+    return 0;
   }
 " HAVE_GCC_BYTESWAP_16)
 
 check_cxx_source_compiles("
   int main() {
     __builtin_bswap32(0);
-    return 0; 
+    return 0;
   }
 " HAVE_GCC_BYTESWAP_32)
 
 check_cxx_source_compiles("
   int main() {
     __builtin_bswap64(0);
-    return 0; 
+    return 0;
   }
 " HAVE_GCC_BYTESWAP_64)
 
@@ -142,7 +165,7 @@ if(NOT HAVE_GCC_BYTESWAP_16 OR NOT HAVE_GCC_BYTESWAP_32 OR NOT HAVE_GCC_BYTESWAP
       __bswap_16(0);
       __bswap_32(0);
       __bswap_64(0);
-      return 0; 
+      return 0;
     }
   " HAVE_GLIBC_BYTESWAP)
 
@@ -153,7 +176,7 @@ if(NOT HAVE_GCC_BYTESWAP_16 OR NOT HAVE_GCC_BYTESWAP_32 OR NOT HAVE_GCC_BYTESWAP
         _byteswap_ushort(0);
         _byteswap_ulong(0);
         _byteswap_uint64(0);
-        return 0; 
+        return 0;
       }
     " HAVE_MSC_BYTESWAP)
 
@@ -164,7 +187,7 @@ if(NOT HAVE_GCC_BYTESWAP_16 OR NOT HAVE_GCC_BYTESWAP_32 OR NOT HAVE_GCC_BYTESWAP
           OSSwapInt16(0);
           OSSwapInt32(0);
           OSSwapInt64(0);
-          return 0; 
+          return 0;
         }
       " HAVE_MAC_BYTESWAP)
 
@@ -175,7 +198,7 @@ if(NOT HAVE_GCC_BYTESWAP_16 OR NOT HAVE_GCC_BYTESWAP_32 OR NOT HAVE_GCC_BYTESWAP
             swap16(0);
             swap32(0);
             swap64(0);
-            return 0; 
+            return 0;
           }
         " HAVE_OPENBSD_BYTESWAP)
       endif()
@@ -197,27 +220,16 @@ if(NOT HAVE_SNPRINTF)
   " HAVE_SPRINTF_S)
 endif()
 
-# Determine whether your compiler supports codecvt.
-
-check_cxx_source_compiles("
-  #include <codecvt>
-  int main() { 
-    std::codecvt_utf8_utf16<wchar_t> x; 
-    return 0; 
-  }
-" HAVE_STD_CODECVT)
-
 # Check for libz using the cmake supplied FindZLIB.cmake
 
-find_package(ZLIB)
-if(ZLIB_FOUND)
-  set(HAVE_ZLIB 1)
-else()
-  set(HAVE_ZLIB 0)
+if(NOT ZLIB_SOURCE)
+  find_package(ZLIB)
+  if(ZLIB_FOUND)
+    set(HAVE_ZLIB 1)
+  else()
+    set(HAVE_ZLIB 0)
+  endif()
 endif()
-
-
-set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake/modules)
 
 find_package(CppUnit)
 if(NOT CppUnit_FOUND AND BUILD_TESTS)

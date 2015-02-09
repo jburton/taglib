@@ -39,7 +39,8 @@ namespace TagLib {
 // A base for the generic and specialized private class types.  New
 // non-templatized members should be added here.
 
-class ListPrivateBase : public RefCounter
+// BIC change to RefCounter
+class ListPrivateBase : public RefCounterOld
 {
 public:
   ListPrivateBase() : autoDelete(false) {}
@@ -207,6 +208,7 @@ bool List<T>::isEmpty() const
 template <class T>
 typename List<T>::Iterator List<T>::find(const T &value)
 {
+  detach();
   return std::find(d->list.begin(), d->list.end(), value);
 }
 

@@ -39,6 +39,7 @@ public:
     CPPUNIT_ASSERT_EQUAL(2, f.audioProperties()->channels());
     CPPUNIT_ASSERT_EQUAL(44100, f.audioProperties()->sampleRate());
     CPPUNIT_ASSERT_EQUAL(16, ((MP4::Properties *)f.audioProperties())->bitsPerSample());
+    CPPUNIT_ASSERT_EQUAL(MP4::Properties::AAC, ((MP4::Properties *)f.audioProperties())->codec());
   }
 
   void testPropertiesALAC()
@@ -49,6 +50,7 @@ public:
     CPPUNIT_ASSERT_EQUAL(2, f.audioProperties()->channels());
     CPPUNIT_ASSERT_EQUAL(44100, f.audioProperties()->sampleRate());
     CPPUNIT_ASSERT_EQUAL(16, ((MP4::Properties *)f.audioProperties())->bitsPerSample());
+    CPPUNIT_ASSERT_EQUAL(MP4::Properties::ALAC, ((MP4::Properties *)f.audioProperties())->codec());
   }
 
   void testCheckValid()
@@ -140,6 +142,7 @@ public:
     CPPUNIT_ASSERT_EQUAL(String("82,164"), f->tag()->itemListMap()["----:com.apple.iTunes:replaygain_track_minmax"].toStringList()[0]);
     CPPUNIT_ASSERT_EQUAL(String("Pearl Jam"), f->tag()->artist());
     CPPUNIT_ASSERT_EQUAL(String("foo"), f->tag()->comment());
+    delete f;
   }
 
   void test64BitAtom()
@@ -156,6 +159,8 @@ public:
 
     f->tag()->itemListMap()["pgap"] = true;
     f->save();
+    delete atoms;
+    delete f;
 
     f = new MP4::File(filename.c_str());
     CPPUNIT_ASSERT_EQUAL(true, f->tag()->itemListMap()["cpil"].toBool());
@@ -165,6 +170,8 @@ public:
     moov = atoms->atoms[0];
     // original size + 'pgap' size + padding
     CPPUNIT_ASSERT_EQUAL(long(77 + 25 + 974), moov->length);
+    delete atoms;
+    delete f;
   }
 
   void testGnre()
@@ -229,7 +236,7 @@ public:
   void testProperties()
   {
     MP4::File f(TEST_FILE_PATH_C("has-tags.m4a"));
-    
+
     PropertyMap tags = f.properties();
 
     CPPUNIT_ASSERT_EQUAL(StringList("Test Artist"), tags["ARTIST"]);

@@ -22,6 +22,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <cstring>
 #include <tbytevector.h>
 #include <tbytevectorlist.h>
 #include <cppunit/extensions/HelperMacros.h>
@@ -38,8 +39,9 @@ class TestByteVector : public CppUnit::TestFixture
   CPPUNIT_TEST(testRfind1);
   CPPUNIT_TEST(testRfind2);
   CPPUNIT_TEST(testToHex);
-  CPPUNIT_TEST(testToUShort);
+  CPPUNIT_TEST(testNumericCoversion);
   CPPUNIT_TEST(testReplace);
+  CPPUNIT_TEST(testIterator);
   CPPUNIT_TEST_SUITE_END();
 
 public:
@@ -122,7 +124,7 @@ public:
     CPPUNIT_ASSERT(i.containsAt(j, 6, 1));
     CPPUNIT_ASSERT(i.containsAt(j, 6, 1, 3));
   }
-  
+
   void testFind1()
   {
     CPPUNIT_ASSERT_EQUAL(4, ByteVector("....SggO."). find("SggO"));
@@ -135,6 +137,12 @@ public:
     CPPUNIT_ASSERT_EQUAL(-1, ByteVector("....SggO."). find("SggO", 6));
     CPPUNIT_ASSERT_EQUAL(-1, ByteVector("....SggO."). find("SggO", 7));
     CPPUNIT_ASSERT_EQUAL(-1, ByteVector("....SggO."). find("SggO", 8));
+
+    // Intentional out-of-bounds access.
+    ByteVector v("0123456789x");
+    v.resize(10);
+    v.data()[10] = 'x';
+    CPPUNIT_ASSERT_EQUAL(-1, v.find("789x", 7));
   }
 
   void testFind2()
@@ -188,13 +196,50 @@ public:
     CPPUNIT_ASSERT_EQUAL(ByteVector("f0e1d2c3b4a5968778695a4b3c2d1e0f"), v.toHex());
   }
 
-  void testToUShort()
+  void testNumericCoversion()
   {
     CPPUNIT_ASSERT_EQUAL((unsigned short)0xFFFF, ByteVector("\xff\xff", 2).toUShort());
     CPPUNIT_ASSERT_EQUAL((unsigned short)0x0001, ByteVector("\x00\x01", 2).toUShort());
     CPPUNIT_ASSERT_EQUAL((unsigned short)0x0100, ByteVector("\x00\x01", 2).toUShort(false));
     CPPUNIT_ASSERT_EQUAL((unsigned short)0xFF01, ByteVector("\xFF\x01", 2).toUShort());
     CPPUNIT_ASSERT_EQUAL((unsigned short)0x01FF, ByteVector("\xFF\x01", 2).toUShort(false));
+
+    const uchar PI32LE[] = { 0x00, 0xdb, 0x0f, 0x49, 0x40 };
+    const uchar PI32BE[] = { 0x00, 0x40, 0x49, 0x0f, 0xdb };
+    const uchar PI64LE[] = { 0x00, 0x18, 0x2d, 0x44, 0x54, 0xfb, 0x21, 0x09, 0x40 };
+    const uchar PI64BE[] = { 0x00, 0x40, 0x09, 0x21, 0xfb, 0x54, 0x44, 0x2d, 0x18 };
+    const uchar PI80LE[] = { 0x00, 0x00, 0xc0, 0x68, 0x21, 0xa2, 0xda, 0x0f, 0xc9, 0x00, 0x40 };
+    const uchar PI80BE[] = { 0x00, 0x40, 0x00, 0xc9, 0x0f, 0xda, 0xa2, 0x21, 0x68, 0xc0, 0x00 };
+
+    ByteVector pi32le(reinterpret_cast<const char*>(PI32LE), 5);
+    CPPUNIT_ASSERT_EQUAL(31415, static_cast<int>(pi32le.toFloat32LE(1) * 10000));
+
+    ByteVector pi32be(reinterpret_cast<const char*>(PI32BE), 5);
+    CPPUNIT_ASSERT_EQUAL(31415, static_cast<int>(pi32be.toFloat32BE(1) * 10000));
+
+    ByteVector pi64le(reinterpret_cast<const char*>(PI64LE), 9);
+    CPPUNIT_ASSERT_EQUAL(31415, static_cast<int>(pi64le.toFloat64LE(1) * 10000));
+
+    ByteVector pi64be(reinterpret_cast<const char*>(PI64BE), 9);
+    CPPUNIT_ASSERT_EQUAL(31415, static_cast<int>(pi64be.toFloat64BE(1) * 10000));
+
+    ByteVector pi80le(reinterpret_cast<const char*>(PI80LE), 11);
+    CPPUNIT_ASSERT_EQUAL(31415, static_cast<int>(pi80le.toFloat80LE(1) * 10000));
+
+    ByteVector pi80be(reinterpret_cast<const char*>(PI80BE), 11);
+    CPPUNIT_ASSERT_EQUAL(31415, static_cast<int>(pi80be.toFloat80BE(1) * 10000));
+
+    ByteVector pi32le2 = ByteVector::fromFloat32LE(pi32le.toFloat32LE(1));
+    CPPUNIT_ASSERT(memcmp(pi32le.data() + 1, pi32le2.data(), 4) == 0);
+
+    ByteVector pi32be2 = ByteVector::fromFloat32BE(pi32be.toFloat32BE(1));
+    CPPUNIT_ASSERT(memcmp(pi32be.data() + 1, pi32be2.data(), 4) == 0);
+
+    ByteVector pi64le2 = ByteVector::fromFloat64LE(pi64le.toFloat64LE(1));
+    CPPUNIT_ASSERT(memcmp(pi64le.data() + 1, pi64le2.data(), 8) == 0);
+
+    ByteVector pi64be2 = ByteVector::fromFloat64BE(pi64be.toFloat64BE(1));
+    CPPUNIT_ASSERT(memcmp(pi64be.data() + 1, pi64be2.data(), 8) == 0);
   }
 
   void testReplace()
@@ -239,6 +284,41 @@ public:
       a.replace(ByteVector("ab"), ByteVector());
       CPPUNIT_ASSERT_EQUAL(ByteVector("cdf"), a);
     }
+    {
+      ByteVector a("abcdabf");
+      a.replace(ByteVector("bf"), ByteVector("x"));
+      CPPUNIT_ASSERT_EQUAL(ByteVector("abcdax"), a);
+    }
+  }
+
+  void testIterator()
+  {
+    ByteVector v1("taglib");
+    ByteVector v2 = v1;
+
+    ByteVector::Iterator it1 = v1.begin();
+    ByteVector::Iterator it2 = v2.begin();
+
+    CPPUNIT_ASSERT_EQUAL('t', *it1);
+    CPPUNIT_ASSERT_EQUAL('t', *it2);
+
+    std::advance(it1, 4);
+    std::advance(it2, 4);
+    *it2 = 'I';
+    CPPUNIT_ASSERT_EQUAL('i', *it1);
+    CPPUNIT_ASSERT_EQUAL('I', *it2);
+
+    ByteVector::ReverseIterator it3 = v1.rbegin();
+    ByteVector::ReverseIterator it4 = v2.rbegin();
+
+    CPPUNIT_ASSERT_EQUAL('b', *it3);
+    CPPUNIT_ASSERT_EQUAL('b', *it4);
+
+    std::advance(it3, 4);
+    std::advance(it4, 4);
+    *it4 = 'A';
+    CPPUNIT_ASSERT_EQUAL('a', *it3);
+    CPPUNIT_ASSERT_EQUAL('A', *it4);
   }
 
 };

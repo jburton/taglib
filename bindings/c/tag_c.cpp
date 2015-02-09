@@ -46,12 +46,12 @@ static bool stringManagementEnabled = true;
 
 void taglib_set_strings_unicode(BOOL unicode)
 {
-  unicodeStrings = bool(unicode);
+  unicodeStrings = (unicode != 0);
 }
 
 void taglib_set_string_management_enabled(BOOL management)
 {
-  stringManagementEnabled = bool(management);
+  stringManagementEnabled = (management != 0);
 }
 
 void taglib_free(void* pointer)
@@ -233,7 +233,7 @@ void taglib_tag_free_strings()
   if(!stringManagementEnabled)
     return;
 
-  for(List<char *>::Iterator it = strings.begin(); it != strings.end(); ++it)
+  for(List<char *>::ConstIterator it = strings.begin(); it != strings.end(); ++it)
     free(*it);
   strings.clear();
 }

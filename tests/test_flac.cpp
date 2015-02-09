@@ -69,6 +69,8 @@ public:
     CPPUNIT_ASSERT_EQUAL(String("image/png"), pic->mimeType());
     CPPUNIT_ASSERT_EQUAL(String("A pixel."), pic->description());
     CPPUNIT_ASSERT_EQUAL(TagLib::uint(150), pic->data().size());
+
+    delete f;
   }
 
   void testAddPicture()
@@ -91,6 +93,7 @@ public:
     newpic->setData("JPEG data");
     f->addPicture(newpic);
     f->save();
+    delete f;
 
     f = new FLAC::File(newname.c_str());
     lst = f->pictureList();
@@ -115,6 +118,7 @@ public:
     CPPUNIT_ASSERT_EQUAL(String("image/jpeg"), pic->mimeType());
     CPPUNIT_ASSERT_EQUAL(String("new image"), pic->description());
     CPPUNIT_ASSERT_EQUAL(ByteVector("JPEG data"), pic->data());
+    delete f;
   }
 
   void testReplacePicture()
@@ -138,6 +142,7 @@ public:
     f->removePictures();
     f->addPicture(newpic);
     f->save();
+    delete f;
 
     f = new FLAC::File(newname.c_str());
     lst = f->pictureList();
@@ -152,6 +157,7 @@ public:
     CPPUNIT_ASSERT_EQUAL(String("image/jpeg"), pic->mimeType());
     CPPUNIT_ASSERT_EQUAL(String("new image"), pic->description());
     CPPUNIT_ASSERT_EQUAL(ByteVector("JPEG data"), pic->data());
+    delete f;
   }
 
   void testRemoveAllPictures()
@@ -165,10 +171,12 @@ public:
 
     f->removePictures();
     f->save();
+    delete f;
 
     f = new FLAC::File(newname.c_str());
     lst = f->pictureList();
     CPPUNIT_ASSERT_EQUAL(TagLib::uint(0), lst.size());
+    delete f;
   }
 
   void testRepeatedSave()
@@ -185,10 +193,12 @@ public:
     tag->setTitle("NEW TITLE 2");
     f->save();
     CPPUNIT_ASSERT_EQUAL(String("NEW TITLE 2"), tag->title());
+    delete f;
 
     f = new FLAC::File(newname.c_str());
     tag = f->tag();
     CPPUNIT_ASSERT_EQUAL(String("NEW TITLE 2"), tag->title());
+    delete f;
   }
 
   void testSaveMultipleValues()
@@ -209,6 +219,7 @@ public:
     CPPUNIT_ASSERT_EQUAL(TagLib::uint(2), m["ARTIST"].size());
     CPPUNIT_ASSERT_EQUAL(String("artist 1"), m["ARTIST"][0]);
     CPPUNIT_ASSERT_EQUAL(String("artist 2"), m["ARTIST"][1]);
+    delete f;
   }
 
   void testDict()
@@ -230,13 +241,14 @@ public:
     CPPUNIT_ASSERT_EQUAL(TagLib::uint(2), dict["ARTIST"].size());
     CPPUNIT_ASSERT_EQUAL(String("artøst 1"), dict["ARTIST"][0]);
     CPPUNIT_ASSERT_EQUAL(String("artöst 2"), dict["ARTIST"][1]);
+    delete f;
   }
 
   void testInvalid()
   {
     ScopedFileCopy copy("silence-44-s", ".flac");
     PropertyMap map;
-    map["HÄÖ"] = String("bla");
+    map[L"H\x00c4\x00d6"] = String("bla");
     FLAC::File f(copy.fileName().c_str());
     PropertyMap invalid = f.setProperties(map);
     CPPUNIT_ASSERT_EQUAL(TagLib::uint(1), invalid.size());

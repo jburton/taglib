@@ -28,6 +28,8 @@ include_directories(
 
 if(ZLIB_FOUND)
   include_directories(${ZLIB_INCLUDE_DIR})
+elseif(HAVE_ZLIB_SOURCE)
+  include_directories(${ZLIB_SOURCE})
 endif()
 
 set(tag_HDRS
@@ -68,16 +70,20 @@ set(tag_HDRS
   mpeg/id3v2/id3v2tag.h
   mpeg/id3v2/frames/attachedpictureframe.h
   mpeg/id3v2/frames/commentsframe.h
+  mpeg/id3v2/frames/eventtimingcodesframe.h
   mpeg/id3v2/frames/generalencapsulatedobjectframe.h
   mpeg/id3v2/frames/ownershipframe.h
   mpeg/id3v2/frames/popularimeterframe.h
   mpeg/id3v2/frames/privateframe.h
   mpeg/id3v2/frames/relativevolumeframe.h
+  mpeg/id3v2/frames/synchronizedlyricsframe.h
   mpeg/id3v2/frames/textidentificationframe.h
   mpeg/id3v2/frames/uniquefileidentifierframe.h
   mpeg/id3v2/frames/unknownframe.h
   mpeg/id3v2/frames/unsynchronizedlyricsframe.h
   mpeg/id3v2/frames/urllinkframe.h
+  mpeg/id3v2/frames/chapterframe.h
+  mpeg/id3v2/frames/tableofcontentsframe.h
   ogg/oggfile.h
   ogg/oggpage.h
   ogg/oggpageheader.h
@@ -159,16 +165,20 @@ set(id3v2_SRCS
 set(frames_SRCS
   mpeg/id3v2/frames/attachedpictureframe.cpp
   mpeg/id3v2/frames/commentsframe.cpp
+  mpeg/id3v2/frames/eventtimingcodesframe.cpp
   mpeg/id3v2/frames/generalencapsulatedobjectframe.cpp
   mpeg/id3v2/frames/ownershipframe.cpp
   mpeg/id3v2/frames/popularimeterframe.cpp
   mpeg/id3v2/frames/privateframe.cpp
   mpeg/id3v2/frames/relativevolumeframe.cpp
+  mpeg/id3v2/frames/synchronizedlyricsframe.cpp
   mpeg/id3v2/frames/textidentificationframe.cpp
   mpeg/id3v2/frames/uniquefileidentifierframe.cpp
   mpeg/id3v2/frames/unknownframe.cpp
   mpeg/id3v2/frames/unsynchronizedlyricsframe.cpp
   mpeg/id3v2/frames/urllinkframe.cpp
+  mpeg/id3v2/frames/chapterframe.cpp
+  mpeg/id3v2/frames/tableofcontentsframe.cpp
 )
 
 set(ogg_SRCS
@@ -295,14 +305,31 @@ set(toolkit_SRCS
   toolkit/tpropertymap.cpp
   toolkit/trefcounter.cpp
   toolkit/tdebuglistener.cpp
-  toolkit/unicode.cpp
 )
+
+if(NOT WIN32)
+  set(unicode_SRCS
+    toolkit/unicode.cpp
+  )
+endif()
+
+if(HAVE_ZLIB_SOURCE)
+  set(zlib_SRCS
+    ${ZLIB_SOURCE}/adler32.c
+    ${ZLIB_SOURCE}/crc32.c
+    ${ZLIB_SOURCE}/inffast.c
+    ${ZLIB_SOURCE}/inflate.c
+    ${ZLIB_SOURCE}/inftrees.c
+    ${ZLIB_SOURCE}/zutil.c
+  )
+endif()
 
 set(tag_LIB_SRCS
   ${mpeg_SRCS} ${id3v1_SRCS} ${id3v2_SRCS} ${frames_SRCS} ${ogg_SRCS}
   ${vorbis_SRCS} ${oggflacs_SRCS} ${mpc_SRCS} ${ape_SRCS} ${toolkit_SRCS} ${flacs_SRCS}
   ${wavpack_SRCS} ${speex_SRCS} ${trueaudio_SRCS} ${riff_SRCS} ${aiff_SRCS} ${wav_SRCS}
   ${asf_SRCS} ${mp4_SRCS} ${mod_SRCS} ${s3m_SRCS} ${it_SRCS} ${xm_SRCS} ${opus_SRCS}
+  ${unicode_SRCS} ${zlib_SRCS}
   tag.cpp
   tagunion.cpp
   fileref.cpp
@@ -312,7 +339,7 @@ set(tag_LIB_SRCS
 add_library(tag ${tag_LIB_SRCS} ${tag_HDRS})
 
 if(ZLIB_FOUND)
-	target_link_libraries(tag ${ZLIB_LIBRARIES})
+  target_link_libraries(tag ${ZLIB_LIBRARIES})
 endif()
 
 set_target_properties(tag PROPERTIES
@@ -328,10 +355,9 @@ if(BUILD_FRAMEWORK)
 endif()
 
 install(TARGETS tag
-	FRAMEWORK DESTINATION ${FRAMEWORK_INSTALL_DIR}
-	LIBRARY DESTINATION ${LIB_INSTALL_DIR}
-	RUNTIME DESTINATION ${BIN_INSTALL_DIR}
-	ARCHIVE DESTINATION ${LIB_INSTALL_DIR}
-	PUBLIC_HEADER DESTINATION ${INCLUDE_INSTALL_DIR}/taglib
+  FRAMEWORK DESTINATION ${FRAMEWORK_INSTALL_DIR}
+  LIBRARY DESTINATION ${LIB_INSTALL_DIR}
+  RUNTIME DESTINATION ${BIN_INSTALL_DIR}
+  ARCHIVE DESTINATION ${LIB_INSTALL_DIR}
+  PUBLIC_HEADER DESTINATION ${INCLUDE_INSTALL_DIR}/taglib
 )
-

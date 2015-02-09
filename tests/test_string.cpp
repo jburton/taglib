@@ -43,6 +43,8 @@ class TestString : public CppUnit::TestFixture
   CPPUNIT_TEST(testToInt);
   CPPUNIT_TEST(testSubstr);
   CPPUNIT_TEST(testNewline);
+  CPPUNIT_TEST(testEncode);
+  CPPUNIT_TEST(testIterator);
   CPPUNIT_TEST_SUITE_END();
 
 public:
@@ -55,6 +57,14 @@ public:
 
     char str[] = "taglib string";
     CPPUNIT_ASSERT(strcmp(s.toCString(), str) == 0);
+    CPPUNIT_ASSERT(s == "taglib string");
+    CPPUNIT_ASSERT(s != "taglib STRING");
+    CPPUNIT_ASSERT(s != "taglib");
+    CPPUNIT_ASSERT(s != "taglib string taglib");
+    CPPUNIT_ASSERT(s == L"taglib string");
+    CPPUNIT_ASSERT(s != L"taglib STRING");
+    CPPUNIT_ASSERT(s != L"taglib");
+    CPPUNIT_ASSERT(s != L"taglib string taglib");
 
     String unicode("José Carlos", String::UTF8);
     CPPUNIT_ASSERT(strcmp(unicode.toCString(), "Jos\xe9 Carlos") == 0);
@@ -72,8 +82,22 @@ public:
     String unicode2(unicode.to8Bit(true), String::UTF8);
     CPPUNIT_ASSERT(unicode == unicode2);
 
-	String unicode3(L"\u65E5\u672C\u8A9E");
-	CPPUNIT_ASSERT(*(unicode3.toCWString() + 1) == L'\u672C');
+    String unicode3(L"\u65E5\u672C\u8A9E");
+    CPPUNIT_ASSERT(*(unicode3.toCWString() + 1) == L'\u672C');
+
+    String unicode4(L"\u65e5\u672c\u8a9e", String::UTF16BE);
+    CPPUNIT_ASSERT(unicode4[1] == L'\u672c');
+
+    String unicode5(L"\u65e5\u672c\u8a9e", String::UTF16LE);
+    CPPUNIT_ASSERT(unicode5[1] == L'\u2c67');
+
+    std::wstring stduni = L"\u65e5\u672c\u8a9e";
+
+    String unicode6(stduni, String::UTF16BE);
+    CPPUNIT_ASSERT(unicode6[1] == L'\u672c');
+
+    String unicode7(stduni, String::UTF16LE);
+    CPPUNIT_ASSERT(unicode7[1] == L'\u2c67');
 
     CPPUNIT_ASSERT(strcmp(String::number(0).toCString(), "0") == 0);
     CPPUNIT_ASSERT(strcmp(String::number(12345678).toCString(), "12345678") == 0);
@@ -226,6 +250,61 @@ public:
     CPPUNIT_ASSERT_EQUAL(L'\x0a', String(lf)[3]);
     CPPUNIT_ASSERT_EQUAL(L'\x0d', String(crlf)[3]);
     CPPUNIT_ASSERT_EQUAL(L'\x0a', String(crlf)[4]);
+  }
+
+  void testEncode()
+  {
+    String jpn(L"\u65E5\u672C\u8A9E");
+    ByteVector jpn1 = jpn.data(String::Latin1);
+    ByteVector jpn2 = jpn.data(String::UTF8);
+    ByteVector jpn3 = jpn.data(String::UTF16);
+    ByteVector jpn4 = jpn.data(String::UTF16LE);
+    ByteVector jpn5 = jpn.data(String::UTF16BE);
+    std::string jpn6 = jpn.to8Bit(false);
+    std::string jpn7 = jpn.to8Bit(true);
+
+    CPPUNIT_ASSERT_EQUAL(ByteVector("\xE5\x2C\x9E"), jpn1);
+    CPPUNIT_ASSERT_EQUAL(ByteVector("\xE6\x97\xA5\xE6\x9C\xAC\xE8\xAA\x9E"), jpn2);
+    CPPUNIT_ASSERT_EQUAL(ByteVector("\xFF\xFE\xE5\x65\x2C\x67\x9E\x8A"), jpn3);
+    CPPUNIT_ASSERT_EQUAL(ByteVector("\xE5\x65\x2C\x67\x9E\x8A"), jpn4);
+    CPPUNIT_ASSERT_EQUAL(ByteVector("\x65\xE5\x67\x2C\x8A\x9E"), jpn5);
+    CPPUNIT_ASSERT_EQUAL(std::string("\xE5\x2C\x9E"), jpn6);
+    CPPUNIT_ASSERT_EQUAL(std::string("\xE6\x97\xA5\xE6\x9C\xAC\xE8\xAA\x9E"), jpn7);
+
+    String empty;
+    ByteVector empty1 = empty.data(String::Latin1);
+    ByteVector empty2 = empty.data(String::UTF8);
+    ByteVector empty3 = empty.data(String::UTF16);
+    ByteVector empty4 = empty.data(String::UTF16LE);
+    ByteVector empty5 = empty.data(String::UTF16BE);
+    std::string empty6 = empty.to8Bit(false);
+    std::string empty7 = empty.to8Bit(true);
+
+    CPPUNIT_ASSERT(empty1.isEmpty());
+    CPPUNIT_ASSERT(empty2.isEmpty());
+    CPPUNIT_ASSERT_EQUAL(ByteVector("\xFF\xFE"), empty3);
+    CPPUNIT_ASSERT(empty4.isEmpty());
+    CPPUNIT_ASSERT(empty5.isEmpty());
+    CPPUNIT_ASSERT(empty6.empty());
+    CPPUNIT_ASSERT(empty7.empty());
+  }
+
+  void testIterator()
+  {
+    String s1 = "taglib string";
+    String s2 = s1;
+
+    String::Iterator it1 = s1.begin();
+    String::Iterator it2 = s2.begin();
+
+    CPPUNIT_ASSERT_EQUAL(L't', *it1);
+    CPPUNIT_ASSERT_EQUAL(L't', *it2);
+
+    std::advance(it1, 4);
+    std::advance(it2, 4);
+    *it2 = L'I';
+    CPPUNIT_ASSERT_EQUAL(L'i', *it1);
+    CPPUNIT_ASSERT_EQUAL(L'I', *it2);
   }
 
 };

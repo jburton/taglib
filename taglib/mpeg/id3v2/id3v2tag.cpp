@@ -81,6 +81,11 @@ public:
 static const Latin1StringHandler defaultStringHandler;
 const ID3v2::Latin1StringHandler *ID3v2::Tag::TagPrivate::stringHandler = &defaultStringHandler;
 
+namespace
+{
+  const uint DefaultPaddingSize = 1024;
+}
+
 ////////////////////////////////////////////////////////////////////////////////
 // StringHandler implementation
 ////////////////////////////////////////////////////////////////////////////////
@@ -356,7 +361,7 @@ void ID3v2::Tag::removeFrame(Frame *frame, bool del)
 void ID3v2::Tag::removeFrames(const ByteVector &id)
 {
   FrameList l = d->frameListMap[id];
-  for(FrameList::Iterator it = l.begin(); it != l.end(); ++it)
+  for(FrameList::ConstIterator it = l.begin(); it != l.end(); ++it)
     removeFrame(*it, true);
 }
 
@@ -469,7 +474,7 @@ void ID3v2::Tag::downgradeFrames(FrameList *frames, FrameList *newFrames) const
   ID3v2::TextIdentificationFrame *frameTDRC = 0;
   ID3v2::TextIdentificationFrame *frameTIPL = 0;
   ID3v2::TextIdentificationFrame *frameTMCL = 0;
-  for(FrameList::Iterator it = d->frameList.begin(); it != d->frameList.end(); it++) {
+  for(FrameList::ConstIterator it = d->frameList.begin(); it != d->frameList.end(); it++) {
     ID3v2::Frame *frame = *it;
     ByteVector frameID = frame->header()->frameID();
     for(int i = 0; unsupportedFrames[i]; i++) {
@@ -583,7 +588,7 @@ ByteVector ID3v2::Tag::render(int version) const
     downgradeFrames(&frameList, &newFrames);
   }
 
-  for(FrameList::Iterator it = frameList.begin(); it != frameList.end(); it++) {
+  for(FrameList::ConstIterator it = frameList.begin(); it != frameList.end(); it++) {
     (*it)->header()->setVersion(version);
     if((*it)->header()->frameID().size() != 4) {
       debug("A frame of unsupported or unknown type \'"
@@ -596,15 +601,21 @@ ByteVector ID3v2::Tag::render(int version) const
 
   // Compute the amount of padding, and append that to tagData.
 
-  uint paddingSize = 0;
-  uint originalSize = d->header.tagSize();
+  uint paddingSize = DefaultPaddingSize;
 
-  if(tagData.size() < originalSize)
-    paddingSize = originalSize - tagData.size();
-  else
-    paddingSize = 1024;
+  if(d->file && tagData.size() < d->header.tagSize()) {
+    paddingSize = d->header.tagSize() - tagData.size();
 
-  tagData.append(ByteVector(paddingSize, char(0)));
+    // Padding won't increase beyond 1% of the file size.
+
+    if(paddingSize > DefaultPaddingSize) {
+      const uint threshold = d->file->length() / 100; // should be ulonglong in taglib2.
+      if(paddingSize > threshold)
+        paddingSize = DefaultPaddingSize;
+    }
+  }
+
+  tagData.append(ByteVector(paddingSize, '\0'));
 
   // Set the version and data size.
   d->header.setMajorVersion(version);
@@ -693,7 +704,7 @@ void ID3v2::Tag::parse(const ByteVector &origData)
       }
 
       d->paddingSize = frameDataLength - frameDataPosition;
-      return;
+      break;
     }
 
     Frame *frame = d->factory->createFrame(data.mid(frameDataPosition),
@@ -712,6 +723,8 @@ void ID3v2::Tag::parse(const ByteVector &origData)
     frameDataPosition += frame->size() + Frame::headerSize(d->header.majorVersion());
     addFrame(frame);
   }
+
+  d->factory->rebuildAggregateFrames(this);
 }
 
 void ID3v2::Tag::setTextFrame(const ByteVector &id, const String &value)

@@ -1,6 +1,12 @@
 project(taglib)
 
-cmake_minimum_required(VERSION 2.6.0 FATAL_ERROR)
+cmake_minimum_required(VERSION 2.8.0 FATAL_ERROR)
+
+if(NOT ${CMAKE_VERSION} VERSION_LESS 2.8.12)
+  cmake_policy(SET CMP0022 OLD)
+endif()
+
+list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake/modules)
 
 option(ENABLE_STATIC "Make static version of libtag"  OFF)
 if(ENABLE_STATIC)
@@ -47,8 +53,8 @@ if (MSVC AND ENABLE_STATIC_RUNTIME)
 endif()
 
 set(TAGLIB_LIB_MAJOR_VERSION "1")
-set(TAGLIB_LIB_MINOR_VERSION "8")
-set(TAGLIB_LIB_PATCH_VERSION "0")
+set(TAGLIB_LIB_MINOR_VERSION "9")
+set(TAGLIB_LIB_PATCH_VERSION "1")
 
 set(TAGLIB_LIB_VERSION_STRING "${TAGLIB_LIB_MAJOR_VERSION}.${TAGLIB_LIB_MINOR_VERSION}.${TAGLIB_LIB_PATCH_VERSION}")
 
@@ -56,9 +62,9 @@ set(TAGLIB_LIB_VERSION_STRING "${TAGLIB_LIB_MAJOR_VERSION}.${TAGLIB_LIB_MINOR_VE
 # 2. If any interfaces have been added, removed, or changed since the last update, increment current, and set revision to 0.
 # 3. If any interfaces have been added since the last public release, then increment age.
 # 4. If any interfaces have been removed since the last public release, then set age to 0. 
-set(TAGLIB_SOVERSION_CURRENT  13)
+set(TAGLIB_SOVERSION_CURRENT  15)
 set(TAGLIB_SOVERSION_REVISION 0)
-set(TAGLIB_SOVERSION_AGE      12)
+set(TAGLIB_SOVERSION_AGE      14)
 
 math(EXPR TAGLIB_SOVERSION_MAJOR "${TAGLIB_SOVERSION_CURRENT} - ${TAGLIB_SOVERSION_AGE}")
 math(EXPR TAGLIB_SOVERSION_MINOR "${TAGLIB_SOVERSION_AGE}")
@@ -79,6 +85,11 @@ endif()
 if(NOT WIN32 AND NOT BUILD_FRAMEWORK)
   configure_file(${CMAKE_CURRENT_SOURCE_DIR}/taglib.pc.cmake ${CMAKE_CURRENT_BINARY_DIR}/taglib.pc )
   install(FILES ${CMAKE_CURRENT_BINARY_DIR}/taglib.pc DESTINATION ${LIB_INSTALL_DIR}/pkgconfig)
+endif()
+
+if(NOT HAVE_ZLIB AND ZLIB_SOURCE)
+  set(HAVE_ZLIB 1)
+  set(HAVE_ZLIB_SOURCE 1)
 endif()
 
 include_directories(${CMAKE_CURRENT_BINARY_DIR})

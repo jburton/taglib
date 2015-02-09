@@ -219,22 +219,24 @@ void RIFF::File::removeChunk(uint i)
 {
   if(i >= d->chunks.size())
     return;
-  
-  removeBlock(d->chunks[i].offset - 8, d->chunks[i].size + 8);
-  d->chunks.erase(d->chunks.begin() + i);
+
+  std::vector<Chunk>::iterator it = d->chunks.begin();
+  std::advance(it, i);
+
+  const uint removeSize = it->size + it->padding + 8;
+  removeBlock(it->offset - 8, removeSize);
+  it = d->chunks.erase(it);
+
+  for(; it != d->chunks.end(); ++it)
+    it->offset -= removeSize;
 }
 
 void RIFF::File::removeChunk(const ByteVector &name)
 {
-  std::vector<Chunk> newChunks;
-  for(size_t i = 0; i < d->chunks.size(); ++i) {
+  for(int i = d->chunks.size() - 1; i >= 0; --i) {
     if(d->chunks[i].name == name)
-      removeBlock(d->chunks[i].offset - 8, d->chunks[i].size + 8);
-    else
-      newChunks.push_back(d->chunks[i]);
+      removeChunk(i);
   }
-
-  d->chunks.swap(newChunks);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -273,7 +275,7 @@ void RIFF::File::read()
       break;
     }
 
-    if(tell() + chunkSize > uint(length())) {
+    if(static_cast<ulonglong>(tell()) + chunkSize > static_cast<ulonglong>(length())) {
       debug("RIFF::File::read() -- Chunk '" + chunkName + "' has invalid size (larger than the file size)");
       setValid(false);
       break;
