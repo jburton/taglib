@@ -239,9 +239,15 @@ void APE::Item::parse(const ByteVector &data)
 
   const uint valueLength  = data.toUInt(0, false);
   const uint flags        = data.toUInt(4, false);
+  
+  const int keyLength = data.find('\0', 8) - 8;
+  if(keyLength < 1 || keyLength > 255)
+  {
+    debug("APE::Item::parse() -- invalid key in item");
+    return;
+  }
 
-  d->key = String(data.mid(8), String::UTF8);
-
+  d->key = String(data.mid(8, keyLength), String::UTF8);
   const ByteVector value = data.mid(8 + d->key.size() + 1, valueLength);
 
   setReadOnly(flags & 1);
