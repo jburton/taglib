@@ -268,6 +268,9 @@ ByteVector APE::Item::render() const
   if(isEmpty())
     return data;
 
+  if(d->key.isEmpty())
+    return data;
+  
   if(d->type == Text) {
     StringList::ConstIterator it = d->text.begin();
 
