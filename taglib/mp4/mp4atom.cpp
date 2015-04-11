@@ -91,9 +91,11 @@ MP4::Atom::Atom(File *file)
       }
       while(file->tell() < offset + length) {
         MP4::Atom *child = new MP4::Atom(file);
-        children.append(child);
-        if (child->length == 0)
+        if (child->length == 0) {
+          delete child;
           return;
+        }
+        children.append(child);
       }
       return;
     }
@@ -161,9 +163,11 @@ MP4::Atoms::Atoms(File *file)
   file->seek(0);
   while(file->tell() + 8 <= end) {
     MP4::Atom *atom = new MP4::Atom(file);
-    atoms.append(atom);
-    if (atom->length == 0)
+    if (atom->length == 0) {
+      delete atom;
       break;
+    }
+    atoms.append(atom);
   }
 }
 
