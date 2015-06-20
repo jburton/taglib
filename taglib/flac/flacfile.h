@@ -46,7 +46,7 @@ namespace TagLib {
   /*!
    * This is implementation of FLAC metadata for non-Ogg FLAC files.  At some
    * point when Ogg / FLAC is more common there will be a similar implementation
-   * under the Ogg hiearchy.
+   * under the Ogg hierarchy.
    *
    * This supports ID3v1, ID3v2 and Xiph style comments as well as reading stream
    * properties from the file.
@@ -165,8 +165,8 @@ namespace TagLib {
        * if there is no valid ID3v2 tag.  If \a create is true it will create
        * an ID3v2 tag if one does not exist and returns a valid pointer.
        *
-       * \note This may return a valid pointer regardless of whether or not the 
-       * file on disk has an ID3v2 tag.  Use hasID3v2Tag() to check if the file 
+       * \note This may return a valid pointer regardless of whether or not the
+       * file on disk has an ID3v2 tag.  Use hasID3v2Tag() to check if the file
        * on disk actually has an ID3v2 tag.
        *
        * \note The Tag <b>is still</b> owned by the MPEG::File and should not be
@@ -184,8 +184,8 @@ namespace TagLib {
        * if there is no valid APE tag.  If \a create is true it will create
        * an APE tag if one does not exist and returns a valid pointer.
        *
-       * \note This may return a valid pointer regardless of whether or not the 
-       * file on disk has an ID3v1 tag.  Use hasID3v1Tag() to check if the file 
+       * \note This may return a valid pointer regardless of whether or not the
+       * file on disk has an ID3v1 tag.  Use hasID3v1Tag() to check if the file
        * on disk actually has an ID3v1 tag.
        *
        * \note The Tag <b>is still</b> owned by the MPEG::File and should not be
@@ -203,10 +203,10 @@ namespace TagLib {
        * if there is no valid XiphComment.  If \a create is true it will create
        * a XiphComment if one does not exist and returns a valid pointer.
        *
-       * \note This may return a valid pointer regardless of whether or not the 
-       * file on disk has a XiphComment.  Use hasXiphComment() to check if the 
+       * \note This may return a valid pointer regardless of whether or not the
+       * file on disk has a XiphComment.  Use hasXiphComment() to check if the
        * file on disk actually has a XiphComment.
-       * 
+       *
        * \note The Tag <b>is still</b> owned by the FLAC::File and should not be
        * deleted by the user.  It will be deleted when the file (object) is
        * destroyed.
@@ -221,6 +221,7 @@ namespace TagLib {
        * when
        *
        * \see ID3v2FrameFactory
+       * \deprecated This value should be passed in via the constructor
        */
       void setID3v2FrameFactory(const ID3v2::FrameFactory *factory);
 
@@ -296,7 +297,6 @@ namespace TagLib {
       long findID3v2();
       long findID3v1();
       ByteVector xiphCommentData() const;
-      long findPaddingBreak(long nextPageOffset, long targetOffset, bool *isLast);
 
       class FilePrivate;
       FilePrivate *d;

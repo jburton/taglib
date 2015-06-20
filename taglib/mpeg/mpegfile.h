@@ -173,7 +173,7 @@ namespace TagLib {
        * This is the same as calling save(AllTags);
        *
        * If you would like more granular control over the content of the tags,
-       * with the concession of generality, use paramaterized save call below.
+       * with the concession of generality, use parameterized save call below.
        *
        * \see save(int tags)
        */
@@ -319,6 +319,7 @@ namespace TagLib {
        * Set the ID3v2::FrameFactory to something other than the default.
        *
        * \see ID3v2FrameFactory
+       * \deprecated This value should be passed in via the constructor
        */
       void setID3v2FrameFactory(const ID3v2::FrameFactory *factory);
 
