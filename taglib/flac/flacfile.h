@@ -79,7 +79,7 @@ namespace TagLib {
            Properties::ReadStyle propertiesStyle = Properties::Average);
 
       /*!
-       * Constructs an APE file from \a file.  If \a readProperties is true the
+       * Constructs an FLAC file from \a file.  If \a readProperties is true the
        * file's audio properties will also be read.
        *
        * If this file contains and ID3v2 tag the frames will be created using
@@ -155,6 +155,9 @@ namespace TagLib {
        * has no XiphComment, one will be constructed from the ID3-tags.
        *
        * This returns true if the save was successful.
+       *
+       * \warning In the current implementation, it's dangerous to call save()
+       * repeatedly.  At worst it will corrupt the file.
        */
       virtual bool save();
 
@@ -229,7 +232,7 @@ namespace TagLib {
        * Returns the block of data used by FLAC::Properties for parsing the
        * stream properties.
        *
-       * \deprecated This method will not be public in a future release.
+       * \deprecated Always returns an empty vector.
        */
       ByteVector streamInfoData(); // BIC: remove
 
@@ -237,7 +240,7 @@ namespace TagLib {
        * Returns the length of the audio-stream, used by FLAC::Properties for
        * calculating the bitrate.
        *
-       * \deprecated This method will not be public in a future release.
+       * \deprecated Always returns zero.
        */
       long streamLength();  // BIC: remove
 
@@ -292,11 +295,10 @@ namespace TagLib {
       File(const File &);
       File &operator=(const File &);
 
-      void read(bool readProperties, Properties::ReadStyle propertiesStyle);
+      void read(bool readProperties);
       void scan();
       long findID3v2();
       long findID3v1();
-      ByteVector xiphCommentData() const;
 
       class FilePrivate;
       FilePrivate *d;

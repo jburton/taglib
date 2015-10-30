@@ -63,7 +63,7 @@ namespace TagLib {
           NoTags  = 0x0000,
           //! Matches ID3v2 tags.
           ID3v2   = 0x0001,
-          //! Matches Info tags.
+          //! Matches INFO tags.
           Info    = 0x0002,
           //! Matches all tag types.
           AllTags = 0xffff
@@ -170,7 +170,7 @@ namespace TagLib {
         File(const File &);
         File &operator=(const File &);
 
-        void read(bool readProperties, Properties::ReadStyle propertiesStyle);
+        void read(bool readProperties);
 
         void strip(TagTypes tags);
 
@@ -178,6 +178,8 @@ namespace TagLib {
          * Returns the index of the chunk that its name is "LIST" and list type is "INFO".
          */
         uint findInfoTagChunk();
+
+        friend class Properties;
 
         class FilePrivate;
         FilePrivate *d;
