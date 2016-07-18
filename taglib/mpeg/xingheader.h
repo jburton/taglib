@@ -114,6 +114,21 @@ namespace TagLib {
       static int xingHeaderOffset(TagLib::MPEG::Header::Version v,
                                   TagLib::MPEG::Header::ChannelMode c);
 
+      /*!
+       * Returns true if the Xing header contains a Lame tag.
+       */
+      bool hasLameTag() const;
+      
+      /*!
+       * Returns the size of the start padding (no. of frames) given in the Lame tag.
+       */
+      uint startPadding() const;
+      
+      /*!
+       * Returns the size of the end padding (no. of frames) given in the Lame tag.
+       */
+      uint endPadding() const;
+      
     private:
       XingHeader(const XingHeader &);
       XingHeader &operator=(const XingHeader &);

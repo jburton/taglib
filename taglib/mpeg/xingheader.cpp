@@ -42,8 +42,13 @@ public:
 
   uint frames;
   uint size;
+  
+  uint startPadding;
+  uint endPadding;
 
   MPEG::XingHeader::HeaderType type;
+  
+  bool hasLameTag;
 };
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -87,6 +92,21 @@ int MPEG::XingHeader::xingHeaderOffset(TagLib::MPEG::Header::Version /*v*/,
   return 0;
 }
 
+bool MPEG::XingHeader::hasLameTag() const
+{
+  return d->hasLameTag;
+}
+
+TagLib::uint MPEG::XingHeader::startPadding() const
+{
+  return d->startPadding;
+}
+
+TagLib::uint MPEG::XingHeader::endPadding() const
+{
+  return d->endPadding;
+}
+
 ////////////////////////////////////////////////////////////////////////////////
 // private members
 ////////////////////////////////////////////////////////////////////////////////
@@ -116,6 +136,24 @@ void MPEG::XingHeader::parse(const ByteVector &data)
     d->frames = data.toUInt(offset + 8,  true);
     d->size   = data.toUInt(offset + 12, true);
     d->type   = Xing;
+    
+    // Look for LAME tag
+    if((data.size() >= (offset + 143)) && data.containsAt("LAME", offset + 120)) {
+      unsigned char b1 = data[offset + 141];
+      unsigned char b2 = data[offset + 142];
+      unsigned char b3 = data[offset + 143];
+      
+      unsigned short first = (unsigned short)(b1 << 4);
+      first += b2 >> 4;
+      
+      unsigned short second = (unsigned short)((b2 & 0xF) << 8);
+      second += b3;
+      
+      d->startPadding = first;
+      d->endPadding = second;
+      
+      d->hasLameTag = true;
+    }
   }
   else {
 
