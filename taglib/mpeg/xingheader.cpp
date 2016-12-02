@@ -38,6 +38,9 @@ public:
   XingHeaderPrivate() :
     frames(0),
     size(0),
+	startPadding(0),
+	endPadding(0),
+	hasLameTag(false),
     type(MPEG::XingHeader::Invalid) {}
 
   uint frames;
