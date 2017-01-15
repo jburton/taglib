@@ -5,7 +5,7 @@
 
 /***************************************************************************
  *   This library is free software; you can redistribute it and/or modify  *
- *   it  under the terms of the GNU Lesser General Public License version  *
+ *   it under the terms of the GNU Lesser General Public License version   *
  *   2.1 as published by the Free Software Foundation.                     *
  *                                                                         *
  *   This library is distributed in the hope that it will be useful, but   *
@@ -15,8 +15,12 @@
  *                                                                         *
  *   You should have received a copy of the GNU Lesser General Public      *
  *   License along with this library; if not, write to the Free Software   *
- *   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,            *
- *   MA  02110-1301  USA                                                   *
+ *   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA         *
+ *   02110-1301  USA                                                       *
+ *                                                                         *
+ *   Alternatively, this file is available under the Mozilla Public        *
+ *   License Version 1.1.  You may obtain a copy of the License at         *
+ *   http://www.mozilla.org/MPL/                                           *
  ***************************************************************************/
 
 #include <modfile.h>
@@ -111,12 +115,12 @@ private:
     CPPUNIT_ASSERT_EQUAL(0, p->sampleRate());
     CPPUNIT_ASSERT_EQUAL(8, p->channels());
     CPPUNIT_ASSERT_EQUAL(31U, p->instrumentCount());
-    CPPUNIT_ASSERT_EQUAL((uchar)1, p->lengthInPatterns());
+    CPPUNIT_ASSERT_EQUAL((unsigned char)1, p->lengthInPatterns());
     CPPUNIT_ASSERT_EQUAL(title, t->title());
-    CPPUNIT_ASSERT_EQUAL(String::null, t->artist());
-    CPPUNIT_ASSERT_EQUAL(String::null, t->album());
+    CPPUNIT_ASSERT_EQUAL(String(), t->artist());
+    CPPUNIT_ASSERT_EQUAL(String(), t->album());
     CPPUNIT_ASSERT_EQUAL(comment, t->comment());
-    CPPUNIT_ASSERT_EQUAL(String::null, t->genre());
+    CPPUNIT_ASSERT_EQUAL(String(), t->genre());
     CPPUNIT_ASSERT_EQUAL(0U, t->year());
     CPPUNIT_ASSERT_EQUAL(0U, t->track());
     CPPUNIT_ASSERT_EQUAL(String("StarTrekker"), t->trackerName());

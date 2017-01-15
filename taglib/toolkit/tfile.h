@@ -86,7 +86,7 @@ namespace TagLib {
      * format, the returned map's unsupportedData() list will contain one entry identifying
      * that object (e.g. the frame type for ID3v2 tags). Use removeUnsupportedProperties()
      * to remove (a subset of) them.
-     * For files that contain more than one tag (e.g. an MP3 with both an ID3v2 and an ID3v2
+     * For files that contain more than one tag (e.g. an MP3 with both an ID3v1 and an ID3v2
      * tag) only the most "modern" one will be exported (ID3v2 in this case).
      * BIC: Will be made virtual in future releases.
      */
@@ -138,7 +138,7 @@ namespace TagLib {
     /*!
      * Reads a block of size \a length at the current get pointer.
      */
-    ByteVector readBlock(ulong length);
+    ByteVector readBlock(unsigned long length);
 
     /*!
      * Attempts to write the block \a data at the current get pointer.  If the
@@ -165,7 +165,7 @@ namespace TagLib {
      */
     long find(const ByteVector &pattern,
               long fromOffset = 0,
-              const ByteVector &before = ByteVector::null);
+              const ByteVector &before = ByteVector());
 
     /*!
      * Returns the offset in the file that \a pattern occurs at or -1 if it can
@@ -181,7 +181,7 @@ namespace TagLib {
      */
     long rfind(const ByteVector &pattern,
                long fromOffset = 0,
-               const ByteVector &before = ByteVector::null);
+               const ByteVector &before = ByteVector());
 
     /*!
      * Insert \a data at position \a start in the file overwriting \a replace
@@ -190,7 +190,7 @@ namespace TagLib {
      * \note This method is slow since it requires rewriting all of the file
      * after the insertion point.
      */
-    void insert(const ByteVector &data, ulong start = 0, ulong replace = 0);
+    void insert(const ByteVector &data, unsigned long start = 0, unsigned long replace = 0);
 
     /*!
      * Removes a block of the file starting a \a start and continuing for
@@ -199,7 +199,7 @@ namespace TagLib {
      * \note This method is slow since it involves rewriting all of the file
      * after the removed portion.
      */
-    void removeBlock(ulong start = 0, ulong length = 0);
+    void removeBlock(unsigned long start = 0, unsigned long length = 0);
 
     /*!
      * Returns true if the file is read only (or if the file can not be opened).
@@ -291,7 +291,7 @@ namespace TagLib {
     /*!
      * Returns the buffer size that is used for internal buffering.
      */
-    static uint bufferSize();
+    static unsigned int bufferSize();
 
   private:
     File(const File &);

@@ -1,3 +1,28 @@
+/***************************************************************************
+    copyright           : (C) 2010 by Lukas Lalinsky
+    email               : lukas@oxygene.sk
+ ***************************************************************************/
+
+/***************************************************************************
+ *   This library is free software; you can redistribute it and/or modify  *
+ *   it under the terms of the GNU Lesser General Public License version   *
+ *   2.1 as published by the Free Software Foundation.                     *
+ *                                                                         *
+ *   This library is distributed in the hope that it will be useful, but   *
+ *   WITHOUT ANY WARRANTY; without even the implied warranty of            *
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU     *
+ *   Lesser General Public License for more details.                       *
+ *                                                                         *
+ *   You should have received a copy of the GNU Lesser General Public      *
+ *   License along with this library; if not, write to the Free Software   *
+ *   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA         *
+ *   02110-1301  USA                                                       *
+ *                                                                         *
+ *   Alternatively, this file is available under the Mozilla Public        *
+ *   License Version 1.1.  You may obtain a copy of the License at         *
+ *   http://www.mozilla.org/MPL/                                           *
+ ***************************************************************************/
+
 #include <string>
 #include <stdio.h>
 #include <tag.h>
@@ -78,7 +103,7 @@ public:
     APE::Item item3 = APE::Item("TRACKNUMBER", "29");
     tag.setItem("TRACKNUMBER", item3);
     properties = tag.properties();
-    CPPUNIT_ASSERT_EQUAL(TagLib::uint(2), properties["TRACKNUMBER"].size());
+    CPPUNIT_ASSERT_EQUAL((unsigned int)2, properties["TRACKNUMBER"].size());
     CPPUNIT_ASSERT_EQUAL(String("17"), properties["TRACKNUMBER"][0]);
     CPPUNIT_ASSERT_EQUAL(String("29"), properties["TRACKNUMBER"][1]);
 
@@ -89,31 +114,39 @@ public:
     PropertyMap properties;
     properties["A"] = String("invalid key: one character");
     properties["MP+"] = String("invalid key: forbidden string");
+    properties[L"\x1234\x3456"] = String("invalid key: Unicode");
     properties["A B~C"] = String("valid key: space and tilde");
     properties["ARTIST"] = String("valid key: normal one");
 
     APE::Tag tag;
     PropertyMap unsuccessful = tag.setProperties(properties);
-    CPPUNIT_ASSERT_EQUAL(TagLib::uint(2), unsuccessful.size());
+    CPPUNIT_ASSERT_EQUAL((unsigned int)3, unsuccessful.size());
     CPPUNIT_ASSERT(unsuccessful.contains("A"));
     CPPUNIT_ASSERT(unsuccessful.contains("MP+"));
+    CPPUNIT_ASSERT(unsuccessful.contains(L"\x1234\x3456"));
+
+    CPPUNIT_ASSERT_EQUAL((unsigned int)2, tag.itemListMap().size());
+    tag.addValue("VALID KEY", "Test Value 1");
+    tag.addValue("INVALID KEY \x7f", "Test Value 2");
+    tag.addValue(L"INVALID KEY \x1234\x3456", "Test Value 3");
+    CPPUNIT_ASSERT_EQUAL((unsigned int)3, tag.itemListMap().size());
   }
-  
+
   void testTextBinary()
   {
     APE::Item item = APE::Item("DUMMY", "Test Text");
     CPPUNIT_ASSERT_EQUAL(String("Test Text"), item.toString());
-    CPPUNIT_ASSERT_EQUAL(ByteVector::null, item.binaryData());
-    
+    CPPUNIT_ASSERT_EQUAL(ByteVector(), item.binaryData());
+
     ByteVector data("Test Data");
     item.setBinaryData(data);
     CPPUNIT_ASSERT(item.values().isEmpty());
-    CPPUNIT_ASSERT_EQUAL(String::null, item.toString());
+    CPPUNIT_ASSERT_EQUAL(String(), item.toString());
     CPPUNIT_ASSERT_EQUAL(data, item.binaryData());
-    
+
     item.setValue("Test Text 2");
     CPPUNIT_ASSERT_EQUAL(String("Test Text 2"), item.toString());
-    CPPUNIT_ASSERT_EQUAL(ByteVector::null, item.binaryData());
+    CPPUNIT_ASSERT_EQUAL(ByteVector(), item.binaryData());
   }
 
 };

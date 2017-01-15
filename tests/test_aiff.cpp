@@ -1,3 +1,28 @@
+/***************************************************************************
+    copyright           : (C) 2009 by Lukas Lalinsky
+    email               : lukas@oxygene.sk
+ ***************************************************************************/
+
+/***************************************************************************
+ *   This library is free software; you can redistribute it and/or modify  *
+ *   it under the terms of the GNU Lesser General Public License version   *
+ *   2.1 as published by the Free Software Foundation.                     *
+ *                                                                         *
+ *   This library is distributed in the hope that it will be useful, but   *
+ *   WITHOUT ANY WARRANTY; without even the implied warranty of            *
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU     *
+ *   Lesser General Public License for more details.                       *
+ *                                                                         *
+ *   You should have received a copy of the GNU Lesser General Public      *
+ *   License along with this library; if not, write to the Free Software   *
+ *   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA         *
+ *   02110-1301  USA                                                       *
+ *                                                                         *
+ *   Alternatively, this file is available under the Mozilla Public        *
+ *   License Version 1.1.  You may obtain a copy of the License at         *
+ *   http://www.mozilla.org/MPL/                                           *
+ ***************************************************************************/
+
 #include <string>
 #include <stdio.h>
 #include <tag.h>
@@ -64,26 +89,40 @@ public:
     {
       RIFF::AIFF::File f(newname.c_str());
       CPPUNIT_ASSERT(!f.hasID3v2Tag());
+
       f.tag()->setTitle(L"TitleXXX");
       f.save();
+      CPPUNIT_ASSERT(f.hasID3v2Tag());
     }
-
     {
       RIFF::AIFF::File f(newname.c_str());
       CPPUNIT_ASSERT(f.hasID3v2Tag());
       CPPUNIT_ASSERT_EQUAL(String(L"TitleXXX"), f.tag()->title());
+
+      f.tag()->setTitle("");
+      f.save();
+      CPPUNIT_ASSERT(!f.hasID3v2Tag());
+    }
+    {
+      RIFF::AIFF::File f(newname.c_str());
+      CPPUNIT_ASSERT(!f.hasID3v2Tag());
     }
   }
 
   void testDuplicateID3v2()
   {
-    RIFF::AIFF::File f(TEST_FILE_PATH_C("duplicate_id3v2.aiff"));
+    ScopedFileCopy copy("duplicate_id3v2", ".aiff");
 
-    // duplicate_id3v2.aiff has duplicate ID3v2 tags.
+    // duplicate_id3v2.aiff has duplicate ID3v2 tag chunks.
     // title() returns "Title2" if can't skip the second tag.
 
+    RIFF::AIFF::File f(copy.fileName().c_str());
     CPPUNIT_ASSERT(f.hasID3v2Tag());
     CPPUNIT_ASSERT_EQUAL(String("Title1"), f.tag()->title());
+
+    f.save();
+    CPPUNIT_ASSERT_EQUAL(7030L, f.length());
+    CPPUNIT_ASSERT_EQUAL(-1L, f.find("Title2"));
   }
 
   void testFuzzedFile1()

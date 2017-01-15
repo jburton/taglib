@@ -32,6 +32,10 @@ elseif(HAVE_ZLIB_SOURCE)
   include_directories(${ZLIB_SOURCE})
 endif()
 
+if(Boost_FOUND)
+  include_directories(${Boost_INCLUDE_DIR})
+endif()
+
 set(tag_HDRS
   tag.h
   fileref.h
@@ -84,6 +88,7 @@ set(tag_HDRS
   mpeg/id3v2/frames/urllinkframe.h
   mpeg/id3v2/frames/chapterframe.h
   mpeg/id3v2/frames/tableofcontentsframe.h
+  mpeg/id3v2/frames/podcastframe.h
   ogg/oggfile.h
   ogg/oggpage.h
   ogg/oggpageheader.h
@@ -179,6 +184,7 @@ set(frames_SRCS
   mpeg/id3v2/frames/urllinkframe.cpp
   mpeg/id3v2/frames/chapterframe.cpp
   mpeg/id3v2/frames/tableofcontentsframe.cpp
+  mpeg/id3v2/frames/podcastframe.cpp
 )
 
 set(ogg_SRCS
@@ -305,6 +311,7 @@ set(toolkit_SRCS
   toolkit/tpropertymap.cpp
   toolkit/trefcounter.cpp
   toolkit/tdebuglistener.cpp
+  toolkit/tzlib.cpp
 )
 
 if(NOT WIN32)
@@ -334,11 +341,12 @@ set(tag_LIB_SRCS
   tagunion.cpp
   fileref.cpp
   audioproperties.cpp
+  tagutils.cpp
 )
 
 add_library(tag ${tag_LIB_SRCS} ${tag_HDRS})
 
-if(ZLIB_FOUND)
+if(HAVE_ZLIB AND NOT HAVE_ZLIB_SOURCE)
   target_link_libraries(tag ${ZLIB_LIBRARIES})
 endif()
 
@@ -351,7 +359,13 @@ set_target_properties(tag PROPERTIES
   PUBLIC_HEADER "${tag_HDRS}"
 )
 if(BUILD_FRAMEWORK)
-  set_target_properties(tag PROPERTIES FRAMEWORK TRUE)
+  unset(INSTALL_NAME_DIR)
+  set_target_properties(tag PROPERTIES 
+      FRAMEWORK TRUE
+      MACOSX_RPATH 1
+      VERSION "A"
+      SOVERSION "A"
+      )
 endif()
 
 install(TARGETS tag
