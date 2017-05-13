@@ -106,6 +106,12 @@ namespace TagLib {
                                bool readAudioProperties = true,
                                AudioProperties::ReadStyle
                                audioPropertiesStyle = AudioProperties::Average) const = 0;
+		
+      virtual File *createFile(IOStream *stream,
+                               bool readAudioProperties = true,
+                               AudioProperties::ReadStyle
+                               audioPropertiesStyle = AudioProperties::Average) const = 0;
+		
     };
 
     /*!

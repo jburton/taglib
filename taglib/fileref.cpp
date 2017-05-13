@@ -92,6 +92,13 @@ namespace
   File *resolveFileType<IOStream *>(IOStream *arg, bool readProperties,
                                     AudioProperties::ReadStyle style)
   {
+    ResolverList::ConstIterator it = fileTypeResolvers.begin();
+    for(; it != fileTypeResolvers.end(); ++it) {
+        File *file = (*it)->createFile(arg, readProperties, style);
+        if(file)
+            return file;
+    }
+    
     return 0;
   }
 
