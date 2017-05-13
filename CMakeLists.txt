@@ -67,6 +67,12 @@ if(MSVC AND ENABLE_STATIC_RUNTIME)
   endforeach(flag_var)
 endif()
 
+if(APPLE)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libc++")
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -mmacosx-version-min=10.7")
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fstack-protector-strong")
+endif()
+
 # Read version information from file taglib/toolkit/taglib.h into variables
 # TAGLIB_LIB_MAJOR_VERSION, TAGLIB_LIB_MINOR_VERSION, TAGLIB_LIB_PATCH_VERSION.
 foreach(version_part MAJOR MINOR PATCH)

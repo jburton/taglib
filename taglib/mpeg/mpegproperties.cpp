@@ -163,14 +163,13 @@ void MPEG::Properties::read(File *file)
 {
   // Only the first frame is required if we have a VBR header.
 
-  const long first = file->firstFrameOffset();
-  if(first < 0) {
+  const long firstHeaderOffset = file->firstFrameOffset();
+  if(firstHeaderOffset < 0) {
     debug("MPEG::Properties::read() -- Could not find a valid first MPEG frame in the stream.");
     return;
   }
 
-  file->seek(first);
-  Header firstHeader(file->readBlock(4));
+  Header firstHeader(file, firstHeaderOffset, false);
 
   if(!firstHeader.isValid()) {
     debug("MPEG::Properties::read() -- The first page header is invalid.");
@@ -180,7 +179,7 @@ void MPEG::Properties::read(File *file)
   // Check for a VBR header that will help us in gathering information about a
   // VBR stream.
 
-  file->seek(first + 4);
+  file->seek(firstHeaderOffset + 4);
   d->xingHeader = new XingHeader(file->readBlock(firstHeader.frameLength() - 4));
 
   Header validHeader = firstHeader;
@@ -201,7 +200,7 @@ void MPEG::Properties::read(File *file)
     delete d->xingHeader;
     d->xingHeader = 0;
     
-    file->seek(first + 4 + 32);
+    file->seek(firstHeaderOffset + 4 + 32);
     d->vbriHeader = new VbriHeader(file->readBlock(24));
     
     if (d->vbriHeader->isValid() &&
@@ -224,8 +223,7 @@ void MPEG::Properties::read(File *file)
       d->vbriHeader = 0;
       
       const long last = file->lastFrameOffset();
-      file->seek(last);
-      Header lastHeader(file->readBlock(4));
+      Header lastHeader(file, last, false);
       
       // To be sure the header is valid, search until two headers match
       
@@ -240,11 +238,10 @@ void MPEG::Properties::read(File *file)
             && firstHeader.isOriginal() == lastHeader.isOriginal()))
       {
         // First and last headers didn't match, try to find some matching ones
-        long headerOffset = file->nextFrameOffset(first + 2);
+        long headerOffset = file->nextFrameOffset(firstHeaderOffset + 2);
         while(headerOffset < last && headerOffset >= 0)
         {
-          file->seek(headerOffset);
-          Header nextHeader(file->readBlock(4));
+          Header nextHeader(file, headerOffset, false);
           if (nextHeader.isValid() && nextHeader.frameLength() > 0 && nextHeader.bitrate() > 0)
           {
             if (firstHeader.version() == nextHeader.version()
